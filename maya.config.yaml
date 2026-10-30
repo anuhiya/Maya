@@ -1,0 +1,39 @@
+# Single source of truth for data, sources, jurisdictions and the as-of date (P8).
+# No jurisdiction names or file names are hard-coded in logic; change them here.
+as_of_date: "2026-11-02"
+
+jurisdictions:
+  - Avalon
+  - Calder
+  - Meridian
+
+policies:
+  main_pair:
+    old: data/policies/gov_rules_v1.txt
+    new: data/policies/gov_rules_v2.txt
+    old_pdf: data/policies/gov_rules_v1.pdf
+    new_pdf: data/policies/gov_rules_v2.pdf
+  company_pair:
+    old: data/company_policies/company_pay_policy_v1.txt
+    new: data/company_policies/company_pay_policy_v2.txt
+    pdf: data/company_policies/company_pay_policy.pdf
+
+employees: data/employees.csv
+
+sources:
+  - name: Policy site
+    kind: policy_site
+    path: data/policy_site
+    unpublished: data/policy_site/_unpublished
+    trusted: true
+  - name: Company policies
+    kind: folder
+    path: data/company_policies
+    trusted: true
+  - name: Manual upload
+    kind: upload
+    trusted: true
+  - name: Federal Register
+    kind: federal_register
+    url: https://www.federalregister.gov/api/v1
+    trusted: false

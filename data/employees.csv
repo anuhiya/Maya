@@ -1,0 +1,81 @@
+employee_id,jurisdiction,hourly_wage,weekly_hours,employment_type,full_name,job_title,department,hire_date,pay_frequency,flsa_status,overtime_eligible,annual_salary,work_arrangement,office_location,secondary_jurisdiction,residence_jurisdiction
+E001,Avalon,17.06,42,hourly_full_time,Kwame Brandt,Office Assistant,Administration,2018-12-13,weekly,non_exempt,yes,,hybrid,Avalon,,Avalon
+E002,Avalon,16.36,40,hourly_full_time,Grace Cruz,Warehouse Associate,Warehouse,2023-05-10,biweekly,non_exempt,yes,,onsite,Avalon,,Calder
+E003,Avalon,20.14,40,hourly_full_time,Caleb Ramos,Sales Associate,Retail,2024-10-22,weekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E004,Avalon,17.25,40,hourly_full_time,Victor Sato,Facilities Technician,Maintenance,2018-05-10,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E005,Avalon,22.99,37.5,hourly_full_time,Ruth Aziz,Sales Associate,Retail,2021-03-13,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E006,Avalon,26.92,40,salaried_exempt,Selin Carter,Operations Supervisor,Operations,2024-11-01,biweekly,exempt,no,56000,onsite,Avalon,,Avalon
+E007,Avalon,23.90,22,hourly_part_time,Chen Lindqvist,Sales Associate,Retail,2022-06-26,semimonthly,non_exempt,yes,,onsite,Avalon,,Avalon
+E008,Avalon,25.09,42,hourly_full_time,Sofia Whitaker,Server Assistant,Food Service,2026-10-05,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E009,Avalon,24.24,12,hourly_part_time,Soo-jin Brooks,Production Operator,Operations,2021-09-05,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E010,Avalon,23.75,42,hourly_full_time,Paloma Meyer,Server Assistant,Food Service,2014-02-17,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E011,Avalon,53.55,25,contractor,Willa Hernandez,Bookkeeping Contractor,Finance,2024-12-21,per_invoice,not_applicable,no,,remote,Avalon,,Avalon
+E012,Avalon,17.85,24,hourly_part_time,Aisha Bishop,Office Assistant,Administration,2025-06-03,weekly,non_exempt,yes,,hybrid,Avalon,,Avalon
+E013,Avalon,17.25,30,hourly_part_time,Noah Lewis,Warehouse Associate,Warehouse,2020-04-18,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E014,Avalon,16.83,48,hourly_full_time,Bianca Rossi,Line Cook,Food Service,2023-10-08,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E015,Avalon,16.86,20,hourly_part_time,Jamal Larsen,Forklift Operator,Warehouse,2016-06-16,biweekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E016,Avalon,16.35,45,salaried_exempt,Dalia Ortiz,Payroll Analyst,Finance,2025-12-03,weekly,exempt,no,34000,remote,Avalon,,Avalon
+E017,Avalon,16.00,38,hourly_full_time,Tessa Kovac,Facilities Technician,Maintenance,2020-10-10,semimonthly,non_exempt,yes,,onsite,Avalon,,Avalon
+E018,Avalon,18.98,38,hourly_full_time,Owen Kapoor,Home Care Aide,Care Services,2021-08-16,weekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E019,Avalon,25.15,44,hourly_full_time,Tariq Fischer,Forklift Operator,Warehouse,2023-09-08,weekly,non_exempt,yes,,onsite,Avalon,,Avalon
+E020,Avalon,17.24,40,hourly_full_time,Nadia Novak,Support Agent,Customer Support,2024-08-19,biweekly,non_exempt,yes,,onsite,Avalon,,Outside
+E021,Avalon,16.20,45,hourly_full_time,Zoe Okafor,Support Agent,Customer Support,2016-02-25,biweekly,non_exempt,yes,,hybrid,Avalon,,Avalon
+E022,Avalon,35.58,40,salaried_exempt,Isaac Barakat,Marketing Specialist,Marketing,2025-08-25,weekly,exempt,no,74000,hybrid,Avalon,Calder,Calder
+E023,Avalon,15.00,20,contractor,Anjali Rahman,Temp Support Agent,Customer Support,2020-05-25,per_invoice,not_applicable,no,,remote,Avalon,,Avalon
+E024,Avalon,16.30,40,hourly_full_time,Joy Silva,Office Assistant,Administration,2018-06-14,biweekly,non_exempt,yes,,hybrid,Avalon,,Avalon
+E025,Calder,14.55,22,hourly_part_time,Lukas Park,Warehouse Associate,Warehouse,2021-12-22,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E026,Calder,17.51,48,hourly_full_time,Nia Iyer,Sales Associate,Retail,2022-06-06,semimonthly,non_exempt,yes,,onsite,Calder,,Calder
+E027,Calder,24.34,44,hourly_full_time,Ibrahim Nwosu,Server Assistant,Food Service,2025-08-08,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E028,Calder,22.26,16,hourly_part_time,Hiroshi Gallagher,Cashier,Retail,2025-06-14,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E029,Calder,33.32,40,contractor,Arjun Mwangi,Temp Support Agent,Customer Support,2025-10-13,per_invoice,not_applicable,no,,remote,Calder,,Calder
+E030,Calder,15.92,12,hourly_part_time,Omar Moretti,Cashier,Retail,2018-08-24,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E031,Calder,27.16,40,salaried_exempt,Priya Murphy,Operations Supervisor,Operations,2022-05-11,biweekly,exempt,no,56500,onsite,Calder,,Calder
+E032,Calder,38.22,45,salaried_exempt,Ethan Nair,Systems Analyst,IT,2021-05-27,weekly,exempt,no,79500,hybrid,Calder,,Calder
+E033,Calder,22.51,48,hourly_full_time,Olivia Alvarez,Cashier,Retail,2026-10-26,semimonthly,non_exempt,yes,,onsite,Calder,,Calder
+E034,Calder,15.13,40,hourly_full_time,Amara Khalil,Sales Associate,Retail,2019-06-05,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E035,Calder,23.67,40,hourly_full_time,Anika Becker,Cashier,Retail,2020-05-19,weekly,non_exempt,yes,,onsite,Calder,,Calder
+E036,Calder,19.03,37.5,hourly_full_time,Reggie Adeyemi,Sales Associate,Retail,2024-07-13,semimonthly,non_exempt,yes,,onsite,Calder,,Calder
+E037,Calder,14.84,40,hourly_full_time,Yara Shah,Home Care Aide,Care Services,2023-12-11,weekly,non_exempt,yes,,onsite,Calder,,Calder
+E038,Calder,46.39,40,salaried_exempt,Mei Weber,Store Manager,Management,2021-02-22,semimonthly,exempt,no,96500,onsite,Calder,,Calder
+E039,Calder,15.50,38,hourly_full_time,Diego Dlamini,Delivery Driver,Logistics,2024-11-27,semimonthly,non_exempt,yes,,onsite,Calder,,Outside
+E040,Calder,24.18,40,hourly_full_time,Imani Eze,Line Cook,Food Service,2022-06-21,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E041,Calder,21.23,37.5,hourly_full_time,Lucia Desai,Line Cook,Food Service,2014-07-24,biweekly,non_exempt,yes,,onsite,Calder,,Outside
+E042,Calder,14.50,45,hourly_full_time,Emeka Mensah,Support Agent,Customer Support,2014-05-18,biweekly,non_exempt,yes,,remote,Calder,,Calder
+E043,Calder,24.31,40,hourly_full_time,Tomas Saleh,Line Cook,Food Service,2026-10-19,biweekly,non_exempt,yes,,onsite,Calder,,Calder
+E044,Calder,15.49,40,hourly_full_time,Rohan Reyes,Line Cook,Food Service,2025-08-28,semimonthly,non_exempt,yes,,onsite,Calder,,Calder
+E045,Calder,19.82,40,hourly_full_time,Fatima Holloway,Sales Associate,Retail,2021-01-02,semimonthly,non_exempt,yes,,onsite,Calder,,Calder
+E046,Calder,14.66,20,hourly_part_time,Hannah Santos,Office Assistant,Administration,2024-02-22,biweekly,non_exempt,yes,,hybrid,Calder,,Calder
+E047,Calder,14.00,20,contractor,Liam Yildiz,Bookkeeping Contractor,Finance,2025-05-11,per_invoice,not_applicable,no,,remote,Calder,,Calder
+E048,Meridian,14.10,40,hourly_full_time,Mateo Kim,Home Care Aide,Care Services,2025-04-26,weekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E049,Meridian,50.24,40,salaried_exempt,Andre Demir,Marketing Specialist,Marketing,2023-05-20,semimonthly,exempt,no,104500,hybrid,Meridian,,Meridian
+E050,Meridian,20.70,48,hourly_full_time,Maria Ivanov,Production Operator,Operations,2016-09-23,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E051,Meridian,17.02,40,hourly_full_time,Hugo Menon,Server Assistant,Food Service,2023-01-04,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E052,Meridian,16.43,48,hourly_full_time,Stefan Costa,Forklift Operator,Warehouse,2026-09-14,biweekly,non_exempt,yes,,onsite,Meridian,,Outside
+E053,Meridian,21.93,50,hourly_full_time,Sanjay Hosseini,Server Assistant,Food Service,2023-11-06,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E054,Meridian,25.24,40,salaried_exempt,Clara Walsh,Operations Supervisor,Operations,2016-10-14,biweekly,exempt,no,52500,onsite,Meridian,,Meridian
+E055,Meridian,13.75,25,hourly_part_time,Thandi Haile,Production Operator,Operations,2016-01-09,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E056,Meridian,17.39,25,hourly_part_time,Kenji Johnson,Home Care Aide,Care Services,2014-03-18,semimonthly,non_exempt,yes,,onsite,Meridian,,Meridian
+E057,Meridian,19.21,40,hourly_full_time,Yusuf Fontaine,Server Assistant,Food Service,2022-11-22,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E058,Meridian,23.08,40,hourly_full_time,Felix Pires,Warehouse Associate,Warehouse,2021-06-11,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E059,Meridian,25.06,20,contractor,Mira Tanaka,Temp Support Agent,Customer Support,2023-08-09,per_invoice,not_applicable,no,,remote,Meridian,,Meridian
+E060,Meridian,50.00,40,salaried_exempt,Gabriel Cohen,HR Generalist,Human Resources,2021-05-02,semimonthly,exempt,no,104000,hybrid,Meridian,,Meridian
+E061,Meridian,20.69,38,hourly_full_time,Marcus Sheikh,Facilities Technician,Maintenance,2018-01-16,semimonthly,non_exempt,yes,,onsite,Meridian,,Meridian
+E062,Meridian,20.83,40,hourly_full_time,Elena Dubois,Server Assistant,Food Service,2020-08-07,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E063,Meridian,15.44,42,hourly_full_time,Ingrid Greene,Sales Associate,Retail,2020-09-27,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E064,Meridian,14.79,45,hourly_full_time,Jonas Petrov,Production Operator,Operations,2020-04-19,semimonthly,non_exempt,yes,,onsite,Meridian,,Meridian
+E065,Meridian,14.99,22,hourly_part_time,Camila Haddad,Sales Associate,Retail,2025-07-28,weekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E066,Meridian,22.49,48,hourly_full_time,Dmitri Lin,Sales Associate,Retail,2024-12-21,weekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E067,Meridian,19.46,28,hourly_part_time,Colin Duarte,Warehouse Associate,Warehouse,2022-10-03,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E068,Meridian,15.00,45,hourly_full_time,Farah Zhang,Line Cook,Food Service,2022-06-22,biweekly,non_exempt,yes,,onsite,Meridian,,Calder
+E069,Meridian,22.15,18,hourly_part_time,Leila Oduya,Production Operator,Operations,2021-03-03,biweekly,non_exempt,yes,,onsite,Meridian,,Meridian
+E070,Meridian,21.92,50,hourly_full_time,Rafael Foley,Support Agent,Customer Support,2026-10-12,biweekly,non_exempt,yes,,remote,Meridian,,Meridian
+E071,Calder,15.10,40,hourly_full_time,Kofi Asante,Support Agent,Customer Support,2025-03-17,biweekly,non_exempt,yes,,remote,Avalon,,Calder
+E072,Meridian,14.40,20,hourly_part_time,Lena Hoffmann,Support Agent,Customer Support,2024-08-05,biweekly,non_exempt,yes,,remote,Calder,,Meridian
+E073,Avalon,16.80,40,hourly_full_time,Ravi Krishnan,Payroll Clerk,Finance,2023-11-06,semimonthly,non_exempt,yes,,remote,Meridian,,Avalon
+E074,Calder,42.31,40,salaried_exempt,Maribel Soto,Systems Analyst,IT,2022-02-14,semimonthly,exempt,no,88000,remote,Calder,,Calder
+E075,Avalon,62.00,30,contractor,Daniel Okoye,Contract Developer,IT,2026-06-01,per_invoice,not_applicable,no,,remote,Avalon,,Avalon
+E076,Calder,15.80,40,hourly_full_time,Ayumi Nakamura,Support Agent,Customer Support,2024-04-22,biweekly,non_exempt,yes,,hybrid,Calder,Avalon,Avalon
+E077,Avalon,17.60,40,hourly_full_time,Samir Qureshi,Office Assistant,Administration,2021-09-13,weekly,non_exempt,yes,,hybrid,Avalon,Meridian,Meridian
+E078,Meridian,15.20,24,hourly_part_time,Brigid Kelly,Payroll Clerk,Finance,2025-07-28,biweekly,non_exempt,yes,,hybrid,Meridian,Calder,Calder
+E079,Avalon,16.10,40,hourly_full_time,Tunde Bakare,Support Agent,Customer Support,2023-02-27,biweekly,non_exempt,yes,,hybrid,Avalon,,Avalon
+E080,Meridian,14.80,44,hourly_full_time,Valentina Greco,Warehouse Associate,Warehouse,2026-10-28,weekly,non_exempt,yes,,onsite,Meridian,,Meridian
