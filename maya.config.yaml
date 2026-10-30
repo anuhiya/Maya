@@ -59,3 +59,9 @@ state:
 matching:
   new_hire_terms:
     - "newly hired"
+
+# Groq models (B9) and where saved runs are kept for replay. Free-tier Groq only.
+llm:
+  reader_model: openai/gpt-oss-120b
+  planner_model: openai/gpt-oss-20b
+  replay_dir: data/replays
