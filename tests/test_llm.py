@@ -144,3 +144,30 @@ def test_prompts_carry_the_definitions_word_for_word():
     assert prompts.CATEGORY_DEFINITIONS in system and "copied exactly" in system and SECTION.text in user
     system, user = prompts.compare_section(None, SECTION)
     assert prompts.CHANGE_TYPE_DEFINITIONS in system and "does not exist" in user
+
+
+class RateLimited(Exception):
+    status_code = 429
+
+    def __init__(self, retry_after=None):
+        super().__init__("429 rate limit")
+        self.response = SimpleNamespace(headers={} if retry_after is None else {"retry-after": retry_after})
+
+
+def test_rate_limit_waits_retry_after_then_succeeds(cfg, tmp_path, monkeypatch, caplog):
+    sleeps = []
+    monkeypatch.setattr("maya.ai.llm.time.sleep", sleeps.append)
+    client = FakeClient(RateLimited("7"), RateLimited(), json.dumps(COMPARE))
+    with caplog.at_level(logging.WARNING, logger="maya.ai.llm"):
+        reply = ask(make(cfg, tmp_path, client))
+    assert reply.answer.change_type == "substantive" and len(client.calls) == 3
+    assert sleeps == [7.0, 10] and "waiting for Groq rate limit" in caplog.text
+
+
+def test_rate_limit_gives_up_after_three_retries(cfg, tmp_path, monkeypatch):
+    sleeps = []
+    monkeypatch.setattr("maya.ai.llm.time.sleep", sleeps.append)
+    client = FakeClient(*[RateLimited() for _ in range(4)])
+    with pytest.raises(LLMError):
+        ask(make(cfg, tmp_path, client))
+    assert len(client.calls) == 4 and len(sleeps) == 3

@@ -34,7 +34,9 @@ class ReadSection(_Answer):
     title: str
     jurisdiction: str
     effective_date: str  # exactly as written, or "missing"
-    value: str | None = None  # digits as written, no $ or % sign, for example "17.25"
+    # the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule
+    # sentence, without $ or %; null if the rule sets none
+    value: str | None = None
     unit: Literal["dollars per hour", "percent", "days"] | None = None
     day_type: Literal["calendar", "business"] | None = None
     obligation: Literal["shall", "must", "may"] | None = None

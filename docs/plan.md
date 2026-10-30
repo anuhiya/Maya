@@ -159,9 +159,10 @@ Split into numbered sections. A PDF with no text (scanned) or a file with no sec
 written (or "missing"), value, unit (dollars per hour, percent, days), calendar or business days,
 obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.
 
-**Category definitions given to the AI:** wages = an hourly pay amount; tax rate = a percentage withheld
-or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported
-or given to employees. If none fits, answer "unclear."
+**Category definitions given to the AI:** wages = a required hourly pay amount in dollars, such as a
+minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must
+be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If
+none fits, answer "unclear".
 
 **3. Compare old and new (AI, JSON answer):** change type (substantive, wording only, added, removed),
 which facts changed, and a one-line reason. Definitions given to the AI:

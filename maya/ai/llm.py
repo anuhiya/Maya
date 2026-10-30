@@ -2,6 +2,7 @@
 import hashlib
 import logging
 import os
+import time
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,6 +17,8 @@ from maya.site import ROOT, load_config
 BASE_URL = "https://api.groq.com/openai/v1"
 TIMEOUT_SECONDS = 60
 REASONING_EFFORT = "low"
+RATE_LIMIT_RETRIES = 3
+RATE_LIMIT_DEFAULT_WAIT = 10
 SECRETS_PATH = ROOT / ".streamlit" / "secrets.toml"
 
 log = logging.getLogger("maya.ai.llm")
@@ -55,6 +58,14 @@ def _secrets(path):
             return tomllib.load(f)
     except (FileNotFoundError, tomllib.TOMLDecodeError):
         return {}
+
+
+def _retry_after(err):
+    """Seconds Groq asks us to wait, or the default."""
+    try:
+        return float(err.response.headers["retry-after"])
+    except (AttributeError, KeyError, TypeError, ValueError):
+        return RATE_LIMIT_DEFAULT_WAIT
 
 
 class LLM:
@@ -134,13 +145,7 @@ class LLM:
         }
         errors = []
         for attempt in range(2):
-            try:
-                response = self._groq().chat.completions.create(
-                    model=model, messages=messages, temperature=0, response_format=response_format,
-                    extra_body={"reasoning_effort": REASONING_EFFORT},
-                )
-            except Exception as err:  # network, auth, rate limit: never leak the key
-                raise LLMError(f"Groq call for {kind} failed: {self._redact(err)}") from None
+            response = self._create(kind, model, messages, response_format)
             raw = response.choices[0].message.content or ""
             try:
                 answer = schema.model_validate_json(raw)
@@ -154,6 +159,23 @@ class LLM:
                 continue
             return Reply(kind, answer, system, user, raw, "groq", model, retries=attempt, errors=errors)
         raise LLMError(f"{model} reply for {kind} failed its schema twice: {errors[-1]}")
+
+    def _create(self, kind, model, messages, response_format):
+        """One Groq call; waits and retries on a rate-limit reply (HTTP 429)."""
+        waits = 0
+        while True:
+            try:
+                return self._groq().chat.completions.create(
+                    model=model, messages=messages, temperature=0, response_format=response_format,
+                    extra_body={"reasoning_effort": REASONING_EFFORT},
+                )
+            except Exception as err:  # network, auth, rate limit: never leak the key
+                if getattr(err, "status_code", None) == 429 and waits < RATE_LIMIT_RETRIES:
+                    waits += 1
+                    log.warning("waiting for Groq rate limit (%ss, retry %d of %d)", _retry_after(err), waits, RATE_LIMIT_RETRIES)
+                    time.sleep(_retry_after(err))
+                    continue
+                raise LLMError(f"Groq call for {kind} failed: {self._redact(err)}") from None
 
     def save_run(self, run_name):
         """Save this run's replies to <replay_dir>/<run_name>.json."""
