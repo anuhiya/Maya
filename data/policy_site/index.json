@@ -1,0 +1,22 @@
+{
+  "documents": [
+    {
+      "title": "Payroll Standards Bulletin PSB-2026-01",
+      "bulletin_number": "PSB-2026-01",
+      "version": 1,
+      "issued": "July 1, 2026",
+      "file": "gov_rules_v1.txt",
+      "sha256": "071b1cd262c9ae954719c2c801b8dbeb25f52db971ca2c75b1e54cd70e54eeec",
+      "policy_family": "regional-dol-payroll-bulletin"
+    },
+    {
+      "title": "Payroll Standards Bulletin PSB-2026-02",
+      "bulletin_number": "PSB-2026-02",
+      "version": 2,
+      "issued": "October 15, 2026",
+      "file": "gov_rules_v2.txt",
+      "sha256": "7b545c11ef578e0e97090ef67f273eb2613b3b55b92b20ca60f7cc198a89063e",
+      "policy_family": "regional-dol-payroll-bulletin"
+    }
+  ]
+}
