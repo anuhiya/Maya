@@ -1,0 +1,24 @@
+# Terracotta & Paper theme (P2, docs/design.md). Only keys supported by Streamlit 1.66.1.
+[theme]
+base = "light"
+primaryColor = "#B5472A"
+backgroundColor = "#F3EEE6"
+secondaryBackgroundColor = "#FFFCF7"
+textColor = "#23201C"
+borderColor = "#E5DCCD"
+greenColor = "#3D6640"
+greenBackgroundColor = "#E4EEDF"
+orangeColor = "#8A5A0F"
+orangeBackgroundColor = "#F6E7C4"
+blueColor = "#34557A"
+blueBackgroundColor = "#DDE6F0"
+redColor = "#A23A2C"
+redBackgroundColor = "#F5DCD6"
+font = "Instrument Sans:https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap, sans-serif"
+headingFont = "Fraunces:https://fonts.googleapis.com/css2?family=Fraunces:wght@600&display=swap, serif"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap, monospace"
+headingFontWeights = 600
+
+[theme.sidebar]
+backgroundColor = "#F3EEE6"
+secondaryBackgroundColor = "#FFFCF7"
