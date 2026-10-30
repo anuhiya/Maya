@@ -90,7 +90,12 @@ def test_export_column_lists():
     assert len(FINDINGS_EXPORT_COLUMNS) == 19
     assert len(IMPACT_EXPORT_COLUMNS) == 13
     assert len(set(FINDINGS_EXPORT_COLUMNS)) == 19
-    assert list(ImpactRow.model_fields) == list(IMPACT_EXPORT_COLUMNS)
+    # flags are shown on screen only; they are not an export column
+    assert [f for f in ImpactRow.model_fields if f != "flags"] == list(IMPACT_EXPORT_COLUMNS)
+
+
+def test_impact_row_flags_default_empty():
+    assert ImpactRow.model_fields["flags"].default_factory() == []
 
 
 def test_dismiss_requires_comment():
