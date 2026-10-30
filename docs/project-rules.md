@@ -54,7 +54,7 @@ Do not add features outside the requirement list. Do not change the expected ans
 ## AI setup (Groq free tier only)
 
 - One OpenAI-compatible client in `maya/ai/llm.py`. Settings: `MAYA_LLM_PROVIDER` (groq or replay),
-  `MAYA_LLM_MODEL`, `GROQ_API_KEY`. Base URL: `https://api.groq.com/openai/v1`. No other provider.
+  `GROQ_API_KEY`. Base URL: `https://api.groq.com/openai/v1`. No other provider.
 - Models (tested in an earlier trial, check Groq's current docs and limits before relying on them):
   `openai/gpt-oss-120b` with reasoning effort low for reading sections, `openai/gpt-oss-20b` for planning
   the agent run. Free limits seen: 30 requests a minute, 1,000 a day, 8,000 tokens a minute, 200,000 a day.
