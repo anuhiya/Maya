@@ -40,10 +40,12 @@ sources:
     trusted: true
   - name: Manual upload
     kind: upload
+    path: data/uploads
     trusted: true
   - name: Federal Register
     kind: federal_register
     url: https://www.federalregister.gov/api/v1
+    search_terms: [minimum wage, payroll]
     trusted: false
 
 # The fictional site the agent watches. Held-back versions are published in this order (file stems).
@@ -54,10 +56,14 @@ site:
   release_order:
     - gov_rules_v3
 
-# Saved state that reset() clears. Both files are gitignored.
+# Saved state that reset() clears. The database holds the reviews, agent runs and the fingerprints of
+# every document seen. It is gitignored.
 state:
   database: maya.db
-  fingerprints: .maya_fingerprints.json
+
+# The agent stops after this many steps, refused ones included.
+agent:
+  max_steps: 25
 
 # Pre-approve is the default: findings that pass the rule stay pending until a person signs off.
 routing:

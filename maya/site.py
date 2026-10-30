@@ -90,7 +90,7 @@ def publish_next(cfg=None):
 
 
 def reset(cfg=None):
-    """Move published release_order versions back, rebuild the index, clear saved state."""
+    """Move published release_order versions back, rebuild the index, clear the database and uploads."""
     cfg = cfg or load_config()
     site_dir, held_dir, _, order = _paths(cfg)
     held_dir.mkdir(parents=True, exist_ok=True)
@@ -98,5 +98,7 @@ def reset(cfg=None):
         for f in sorted(site_dir.glob(f"{stem}.*")):
             shutil.move(str(f), held_dir / f.name)
     build_index(cfg)
-    for key in ("fingerprints", "database"):
-        (cfg["_root"] / cfg["state"][key]).unlink(missing_ok=True)
+    (cfg["_root"] / cfg["state"]["database"]).unlink(missing_ok=True)  # reviews, runs and fingerprints
+    for source in cfg["sources"]:
+        if source["kind"] == "upload":
+            shutil.rmtree(cfg["_root"] / source["path"], ignore_errors=True)

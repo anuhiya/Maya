@@ -12,7 +12,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--yes", action="store_true", help="confirm the reset")
     if not parser.parse_args().yes:
-        print("Nothing done. Run with --yes to reset the site, saved fingerprints and database.")
+        print("Nothing done. Run with --yes to reset the site, database (with its fingerprints) and uploads.")
         return 1
     site.reset()
     print("Reset done.")

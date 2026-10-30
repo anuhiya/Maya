@@ -82,3 +82,24 @@ def explain_finding(finding):
     }
     lines = "\n".join(f"{key}: {value}" for key, value in facts.items())
     return system, f"Facts:\n{lines}"
+
+
+PLANNER_SYSTEM = (
+    "You run Maya, a payroll policy watcher. Goal: find what changed since the approved version, who it "
+    "affects, what it costs, and who must decide. Call exactly one tool at a time and read its result. "
+    "Typical order: watch_sources; then for each change fetch_document, split_sections, read_sections; "
+    "then check_answers, match_employees, price_changes, route_findings; search_federal_register once; "
+    "then finish. Every call needs a plan: one sentence on why you call it. You cannot approve anything: "
+    "only the routing rule or a person can. Federal Register results are informational only. If a tool "
+    "result says REFUSED, change your next step instead of repeating it."
+)
+
+
+def run_summary(facts):
+    """Prompt for run_summary: two or three plain sentences about the run. Returns (system, user)."""
+    system = (
+        "You write the closing summary of one agent run for a payroll reviewer, in two or three plain "
+        "sentences. Use only the facts given and copy every number exactly. Do not calculate, do not add "
+        "dates, and never say anything is approved: findings wait for a person. Answer with JSON only."
+    )
+    return system, "Facts:\n" + "\n".join(f"{key}: {value}" for key, value in facts.items())

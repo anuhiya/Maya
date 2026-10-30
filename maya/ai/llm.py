@@ -1,5 +1,6 @@
 """Groq client, retries and logging (B9, P3)."""
 import hashlib
+import json
 import logging
 import os
 import time
@@ -19,6 +20,7 @@ TIMEOUT_SECONDS = 60
 REASONING_EFFORT = "low"
 RATE_LIMIT_RETRIES = 3
 RATE_LIMIT_DEFAULT_WAIT = 10
+RETRYABLE_PLAN_ERRORS = ("did not call a tool", "Parsing failed")
 SECRETS_PATH = ROOT / ".streamlit" / "secrets.toml"
 
 log = logging.getLogger("maya.ai.llm")
@@ -128,6 +130,45 @@ class LLM:
         log.info("%s answered %s via %s%s", reply.model, kind, reply.provider, " (replayed from saved run)" if reply.replayed else "")
         return reply
 
+    def plan(self, messages, tools):
+        """One planner turn: the tool the model chose. Reply.answer is {"name": ..., "arguments": {...}}."""
+        user = json.dumps({"messages": messages, "tools": tools}, sort_keys=True)
+        digest = prompt_hash("planner", user)
+        if self._player is not None:
+            saved = self._player.get("plan", digest)
+            reply = Reply("plan", json.loads(saved["reply"]), "planner", user, saved["reply"],
+                          saved["provider"], saved["model"], replayed=True)
+        else:
+            model = self.models["planner"]
+            answer = self._choose_tool(model, messages, tools)
+            reply = Reply("plan", answer, "planner", user, json.dumps(answer, sort_keys=True), "groq", model)
+        self.records.append({
+            "kind": "plan", "role": "planner", "prompt_hash": digest, "system": "planner", "user": user,
+            "reply": reply.raw, "provider": reply.provider, "model": reply.model,
+            "replayed": reply.replayed, "retries": 0,
+        })
+        return reply
+
+    def _choose_tool(self, model, messages, tools):
+        """Ask the planner for a tool; if it names none, ask again (up to two more times)."""
+        asked = messages
+        for attempt in range(3):
+            try:
+                response = self._create("plan", model, asked, tools=tools, tool_choice="required")
+                calls = response.choices[0].message.tool_calls or []
+                if calls:
+                    return {"name": calls[0].function.name, "arguments": json.loads(calls[0].function.arguments)}
+                problem = f"{model} did not choose a tool."
+            except LLMError as err:
+                if not any(text in str(err) for text in RETRYABLE_PLAN_ERRORS):
+                    raise
+                problem = str(err)
+            except (ValueError, AttributeError):
+                problem = f"{model} gave a tool call that is not valid JSON."
+            log.warning("planner attempt %d: %s", attempt + 1, problem)
+            asked = messages + [{"role": "user", "content": "Call exactly one of the tools now."}]
+        raise LLMError(problem)
+
     def _replay(self, kind, schema, system, user, digest):
         saved = self._player.get(kind, digest)
         try:
@@ -160,14 +201,15 @@ class LLM:
             return Reply(kind, answer, system, user, raw, "groq", model, retries=attempt, errors=errors)
         raise LLMError(f"{model} reply for {kind} failed its schema twice: {errors[-1]}")
 
-    def _create(self, kind, model, messages, response_format):
+    def _create(self, kind, model, messages, response_format=None, **extra):
         """One Groq call; waits and retries on a rate-limit reply (HTTP 429)."""
         waits = 0
         while True:
             try:
                 return self._groq().chat.completions.create(
-                    model=model, messages=messages, temperature=0, response_format=response_format,
+                    model=model, messages=messages, temperature=0,
                     extra_body={"reasoning_effort": REASONING_EFFORT},
+                    **({"response_format": response_format} if response_format else {}), **extra,
                 )
             except Exception as err:  # network, auth, rate limit: never leak the key
                 if getattr(err, "status_code", None) == 429 and waits < RATE_LIMIT_RETRIES:

@@ -93,10 +93,22 @@ class ExplainFinding(_Answer):
         return _not_blank(value)
 
 
+class RunSummary(_Answer):
+    """run_summary: the closing summary of an agent run (A2, A4). Code checks it against the data."""
+
+    summary: str
+
+    @field_validator("summary")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        return _not_blank(value)
+
+
 SCHEMAS: dict[str, type[_Answer]] = {
     "read_section": ReadSection,
     "compare_section": CompareSection,
     "explain_finding": ExplainFinding,
+    "run_summary": RunSummary,
 }
 
 # Annotation keys Groq's schema validator rejects. Nothing else is removed.
