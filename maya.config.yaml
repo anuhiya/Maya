@@ -65,6 +65,12 @@ state:
 agent:
   max_steps: 25
 
+# Page display: log times are stored in UTC and shown in this zone; a replayed run pauses between log lines.
+ui:
+  timezone: America/New_York
+  timezone_label: ET
+  replay_line_delay: 0.25
+
 # Pre-approve is the default: findings that pass the rule stay pending until a person signs off.
 routing:
   approval_mode: pre_approve

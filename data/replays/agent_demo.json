@@ -721,5 +721,32 @@
       "replayed": false,
       "retries": 0
     }
+  ],
+  "federal_register": [
+    {
+      "title": "Implementing the Guiding and Establishing National Innovation for U.S. Stablecoins Act for the Issuance of Stablecoins by Entities Subject to the Jurisdiction of the Office of the Comptroller of the Currency",
+      "date": "2026-10-23",
+      "url": "https://www.federalregister.gov/documents/2026/10/23/2026-21706/implementing-the-guiding-and-establishing-national-innovation-for-us-stablecoins-act-for-the"
+    },
+    {
+      "title": "Elimination of Time-in-Grade",
+      "date": "2026-10-19",
+      "url": "https://www.federalregister.gov/documents/2026/10/19/2026-21319/elimination-of-time-in-grade"
+    },
+    {
+      "title": "Removal of Automatic Extensions for Certain Employment Authorization Documents",
+      "date": "2026-10-14",
+      "url": "https://www.federalregister.gov/documents/2026/10/14/2026-20955/removal-of-automatic-extensions-for-certain-employment-authorization-documents"
+    },
+    {
+      "title": "Optional Practical Training Fees",
+      "date": "2026-10-08",
+      "url": "https://www.federalregister.gov/documents/2026/10/08/2026-20660/optional-practical-training-fees"
+    },
+    {
+      "title": "Transparency in Coverage",
+      "date": "2026-10-06",
+      "url": "https://www.federalregister.gov/documents/2026/10/06/2026-20447/transparency-in-coverage"
+    }
   ]
 }

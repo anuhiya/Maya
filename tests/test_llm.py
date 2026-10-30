@@ -171,3 +171,12 @@ def test_rate_limit_gives_up_after_three_retries(cfg, tmp_path, monkeypatch):
     with pytest.raises(LLMError):
         ask(make(cfg, tmp_path, client))
     assert len(client.calls) == 4 and len(sleeps) == 3
+
+
+def test_rate_limit_wait_is_reported_before_sleeping(cfg, tmp_path, monkeypatch):
+    monkeypatch.setattr("maya.ai.llm.time.sleep", lambda s: None)
+    llm = make(cfg, tmp_path, FakeClient(RateLimited("7"), json.dumps(COMPARE)))
+    waits = []
+    llm.on_wait = waits.append
+    ask(llm)
+    assert waits == [7.0]

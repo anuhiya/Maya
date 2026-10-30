@@ -47,12 +47,29 @@ CSS = """
 [class*="st-key-pick_"] button { justify-content: flex-start; text-align: left; padding: 0; min-height: 0; font-weight: 600; }
 [class*="st-key-pick_"] button p { text-align: left; }
 .mq-when { text-align: right; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: #6B6259; }
-.st-key-signoff button, .st-key-clear_filters button { white-space: nowrap; }
+.st-key-signoff button, .st-key-clear_filters button, .st-key-confirm_yes button, .st-key-publish button { white-space: nowrap; }
 .mq-scroll { overflow-x: auto; }
 .mq-table td, .mq-table th { overflow-wrap: anywhere; }
 .mq-hist { font-size: 0.86rem; border-left: 3px solid #E5DCCD; padding: 0.1rem 0 0.1rem 0.7rem; margin-bottom: 0.5rem; }
 .mq-hist .when { font-family: "IBM Plex Mono", monospace; color: #6B6259; font-size: 0.76rem; }
 .mq-foot { color: #5C544A; font-size: 0.75rem; line-height: 1.4; }
+.mq-log { background: #FFFCF7; border: 1px solid #E5DCCD; border-radius: 12px; padding: 0.4rem 0.8rem; max-height: 30rem; overflow-y: auto; }
+.mq-line { display: grid; grid-template-columns: 4.4rem 4.6rem 1fr; gap: 0.6rem; align-items: baseline; padding: 0.3rem 0; border-bottom: 1px solid #E5DCCD; font-size: 0.86rem; }
+.mq-line:last-child { border-bottom: 0; }
+.mq-line .at { font-family: "IBM Plex Mono", monospace; color: #6B6259; font-size: 0.76rem; }
+.mq-line .txt { overflow-wrap: anywhere; }
+.mq-line .txt.mono { font-family: "IBM Plex Mono", monospace; font-size: 0.8rem; }
+.mq-line .rp { display: block; color: #6B6259; font-size: 0.72rem; }
+.mq-tag { display: inline-block; text-align: center; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.04em; border-radius: 6px; padding: 0.05rem 0.45rem; }
+.mq-tag.plan { background: #DDE6F0; color: #34557A; }
+.mq-tag.tool { background: #E5DCCD; color: #23201C; }
+.mq-tag.ai { background: #F6E7C4; color: #8A5A0F; }
+.mq-tag.pass { background: #E4EEDF; color: #3D6640; }
+.mq-tag.fail { background: #F5DCD6; color: #A23A2C; }
+.mq-tag.result { background: #B5472A; color: #FFFFFF; }
+.mq-item { font-size: 0.88rem; margin-bottom: 0.3rem; overflow-wrap: anywhere; }
+.mq-item .when { font-family: "IBM Plex Mono", monospace; color: #6B6259; font-size: 0.76rem; }
+.mq-item a { color: #34557A; }
 @media (max-width: 900px) { .mq-cards { grid-template-columns: repeat(2, 1fr); } }
 </style>
 """

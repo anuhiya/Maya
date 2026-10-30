@@ -14,13 +14,29 @@ def _file(replay_dir, run_name):
     return Path(replay_dir) / f"{run_name}.json"
 
 
-def save_run(run_name, records, replay_dir):
-    """Write a run's recorded calls to <replay_dir>/<run_name>.json and return the path."""
+def save_run(run_name, records, replay_dir, federal_register=None):
+    """Write a run's recorded calls to <replay_dir>/<run_name>.json and return the path.
+
+    federal_register is the search result of the run (title, date and url per item), kept so a replay
+    needs no network.
+    """
     path = _file(replay_dir, run_name)
     path.parent.mkdir(parents=True, exist_ok=True)
     kept = [r for r in records if not r.get("replayed")]
-    path.write_text(json.dumps({"run": run_name, "records": kept}, indent=2, ensure_ascii=False), encoding="utf-8")
+    data = {"run": run_name, "records": kept}
+    if federal_register is not None:
+        data["federal_register"] = federal_register
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     return path
+
+
+def load_federal_register(replay_dir, run_name):
+    """The Federal Register items saved with a run, or None when the run has none."""
+    try:
+        data = json.loads(_file(replay_dir, run_name).read_text(encoding="utf-8"))
+    except (OSError, ReplayError, ValueError):
+        return None
+    return data.get("federal_register")
 
 
 class ReplayPlayer:
@@ -35,6 +51,7 @@ class ReplayPlayer:
                 "Set MAYA_REPLAY_RUN to a saved run or set MAYA_LLM_PROVIDER=groq with GROQ_API_KEY."
             )
         data = json.loads(self.path.read_text(encoding="utf-8"))
+        self.federal_register = data.get("federal_register")
         self._by_key = {}
         for record in data["records"]:
             self._by_key.setdefault((record["kind"], record["prompt_hash"]), record)

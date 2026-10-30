@@ -110,9 +110,11 @@ def _money(value: Decimal) -> str:
 
 class Agent:
     def __init__(self, cfg: dict, planner: Planner, llm: LLM, conn, on_line: Callable | None = None,
-                 federal_register_get: Callable | None = None):
+                 federal_register_get: Callable | None = None, saved_run: str | None = None):
         self.cfg, self.planner, self.llm, self.conn, self.on_line = cfg, planner, llm, conn, on_line
         self.fr_get = federal_register_get or sources._get
+        llm.on_wait = self._rate_limit_wait
+        self.saved_run = saved_run  # a saved run whose Federal Register result may stand in for the search
         self.max_steps = cfg.get("agent", {}).get("max_steps", 25)
         self.replayed = llm.provider == "replay"
         self.log: list[AgentLogLine] = []
@@ -132,6 +134,9 @@ class Agent:
         self.log.append(line)
         if self.on_line:
             self.on_line(line)
+
+    def _rate_limit_wait(self, seconds: float) -> None:
+        self.emit(LogTag.RESULT, f"Waiting {seconds:g} seconds for the model rate limit, then retrying.")
 
     def check(self, passed: bool, text: str) -> None:
         self.emit(LogTag.CHECK, ("Passed: " if passed else "Failed: ") + text)
@@ -334,15 +339,30 @@ class Agent:
         self.emit(LogTag.RESULT, text)
         return text
 
+    def _snapshot(self) -> list[sources.InformationalItem] | None:
+        saved = self.llm.saved_federal_register(None if self.replayed else self.saved_run)
+        if saved is None:
+            return None
+        return [sources.InformationalItem(i["title"], i["date"], i["url"]) for i in saved]
+
     def _search_federal_register(self, args: dict) -> str:
         self.searched = True
-        self.informational, error = sources.search_federal_register(self.cfg, self.fr_get)
-        if error:
-            self.check(False, error)
-            return error
+        snapshot, note = self._snapshot(), ""
+        if self.replayed and snapshot is not None:  # a replayed run needs no network
+            self.informational = snapshot
+        else:
+            self.informational, error = sources.search_federal_register(self.cfg, self.fr_get)
+            if error and snapshot is not None:
+                self.informational, note = snapshot, f" {error}; showing the saved result (replayed from saved run)."
+            elif error:
+                self.check(False, error)
+                return error
+            else:
+                self.llm.federal_register = [{"title": i.title, "date": i.date, "url": i.url}
+                                             for i in self.informational]
         text = (f"{len(self.informational)} Federal Register item(s), informational only. "
                 "They are not matched to employees or priced.")
-        self.emit(LogTag.RESULT, text)
+        self.emit(LogTag.RESULT, text + note)
         for item in self.informational:
             self.emit(LogTag.RESULT, f"Informational: {item.title} ({item.date}) {item.url}")
         return text

@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from maya.ai.replay import ReplayPlayer, save_run
+from maya.ai.replay import ReplayPlayer, load_federal_register, save_run
 from maya.ai.schemas import SCHEMAS, groq_json_schema
 from maya.site import ROOT, load_config
 
@@ -82,6 +82,8 @@ class LLM:
         self.provider = self._setting("MAYA_LLM_PROVIDER") or "groq"
         self.run_name = run_name or self._setting("MAYA_REPLAY_RUN")
         self.records = []
+        self.federal_register = None  # items the agent's search found, saved with the run
+        self.on_wait = None  # called with the seconds to wait before a rate-limit retry
         self._client = client
         self._player = None
         if self.provider == "replay":
@@ -215,10 +217,18 @@ class LLM:
                 if getattr(err, "status_code", None) == 429 and waits < RATE_LIMIT_RETRIES:
                     waits += 1
                     log.warning("waiting for Groq rate limit (%ss, retry %d of %d)", _retry_after(err), waits, RATE_LIMIT_RETRIES)
+                    if self.on_wait:
+                        self.on_wait(_retry_after(err))
                     time.sleep(_retry_after(err))
                     continue
                 raise LLMError(f"Groq call for {kind} failed: {self._redact(err)}") from None
 
     def save_run(self, run_name):
         """Save this run's replies to <replay_dir>/<run_name>.json."""
-        return save_run(run_name, self.records, self.replay_dir)
+        return save_run(run_name, self.records, self.replay_dir, self.federal_register)
+
+    def saved_federal_register(self, run_name=None):
+        """The search result saved with a run (the one being replayed by default), or None."""
+        if self._player is not None and run_name in (None, self.run_name):
+            return self._player.federal_register
+        return load_federal_register(self.replay_dir, run_name) if run_name else None
