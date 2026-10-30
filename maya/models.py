@@ -239,6 +239,7 @@ class ImpactRow(BaseModel):
     weekly_increase: Decimal | None = None
     calculation: str = ""
     timing: Timing
+    flags: list[Flag] = Field(default_factory=list)  # on-screen only, not an export column
 
 
 class Decision(BaseModel):

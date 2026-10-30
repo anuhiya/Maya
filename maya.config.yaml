@@ -53,3 +53,9 @@ site:
 state:
   database: maya.db
   fingerprints: .maya_fingerprints.json
+
+# Matching rule R4: a reporting rule containing any of these terms is about future hires
+# and matches no current employee. Case-insensitive.
+matching:
+  new_hire_terms:
+    - "newly hired"
