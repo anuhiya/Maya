@@ -54,6 +54,10 @@ state:
   database: maya.db
   fingerprints: .maya_fingerprints.json
 
+# Pre-approve is the default: findings that pass the rule stay pending until a person signs off.
+routing:
+  approval_mode: pre_approve
+
 # Matching rule R4: a reporting rule containing any of these terms is about future hires
 # and matches no current employee. Case-insensitive.
 matching:
