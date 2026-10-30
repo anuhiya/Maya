@@ -2,9 +2,10 @@
 
 # Definitions from docs/plan.md "Reading and comparing", word for word.
 CATEGORY_DEFINITIONS = (
-    "wages = an hourly pay amount; tax rate = a percentage withheld or contributed; "
-    "filing deadline = when a report or return must be filed; reporting = what must be reported "
-    'or given to employees. If none fits, answer "unclear."'
+    "wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage "
+    "withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must "
+    "be reported, or given or shown to employees (pay statements, notices). "
+    'If none fits, answer "unclear".'
 )
 
 CHANGE_TYPE_DEFINITIONS = (
@@ -36,7 +37,7 @@ def read_section(section):
     system = (
         "You read one numbered section of a payroll policy and extract its facts. "
         "Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), "
-        "value as plain digits without $ or %, unit (dollars per hour, percent, days), calendar or "
+        "value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or "
         "business days, obligation (shall, must, may), category, the rule sentence quoted, and the date "
         "line quoted.\n\n"
         f"Category definitions: {CATEGORY_DEFINITIONS}\n\n{_LABELS}\n\n{_COPY_EXACTLY}"

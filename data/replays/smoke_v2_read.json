@@ -1,0 +1,125 @@
+{
+  "run": "smoke_v2_read",
+  "records": [
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "d6917d4dcc7008a3",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 1.1, titled 'Minimum Wage':\nJurisdiction: Avalon\nEffective Date: November 1, 2026\nEvery employer shall pay each covered employee a wage of not less than $17.25 per hour for all hours worked.",
+      "reply": "{\n  \"section\": \"1.1\",\n  \"title\": \"Minimum Wage\",\n  \"jurisdiction\": \"Avalon\",\n  \"effective_date\": \"November 1, 2026\",\n  \"value\": \"17.25\",\n  \"unit\": \"dollars per hour\",\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"wages\",\n  \"rule_quote\": \"Every employer shall pay each covered employee a wage of not less than $17.25 per hour for all hours worked.\",\n  \"date_quote\": \"Effective Date: November 1, 2026\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "7b833542676a81a2",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 1.2, titled 'Unemployment Insurance Contribution Rate':\nJurisdiction: Avalon\nEffective Date: January 1, 2027\nEvery employer shall contribute 3.1% of each covered employee's taxable wages to the Avalon Unemployment Insurance Fund.",
+      "reply": "{\n  \"section\": \"1.2\",\n  \"title\": \"Unemployment Insurance Contribution Rate\",\n  \"jurisdiction\": \"Avalon\",\n  \"effective_date\": \"January 1, 2027\",\n  \"value\": \"3.1\",\n  \"unit\": \"percent\",\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"tax_rate\",\n  \"rule_quote\": \"Every employer shall contribute 3.1% of each covered employee's taxable wages to the Avalon Unemployment Insurance Fund.\",\n  \"date_quote\": \"Effective Date: January 1, 2027\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "dc28f99ed1306fbb",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 1.3, titled 'Pay Statements':\nJurisdiction: Avalon\nEffective Date: January 1, 2027\nEvery employer shall furnish each employee, on every regular payday, a written or electronic pay statement showing gross wages, all deductions, net wages and the hours worked at each rate of pay.",
+      "reply": "{\n  \"section\": \"1.3\",\n  \"title\": \"Pay Statements\",\n  \"jurisdiction\": \"Avalon\",\n  \"effective_date\": \"January 1, 2027\",\n  \"value\": null,\n  \"unit\": null,\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"reporting\",\n  \"rule_quote\": \"Every employer shall furnish each employee, on every regular payday, a written or electronic pay statement showing gross wages, all deductions, net wages and the hours worked at each rate of pay.\",\n  \"date_quote\": \"Effective Date: January 1, 2027\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "80754d2c4cd7a8b1",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 1.4, titled 'Wage Notice at Hire':\nJurisdiction: Avalon\nEffective Date: January 1, 2027\nEvery employer shall give each newly hired employee, on the first day of work, a written notice stating the employee's hourly rate of pay and regular payday.",
+      "reply": "{\n  \"section\": \"1.4\",\n  \"title\": \"Wage Notice at Hire\",\n  \"jurisdiction\": \"Avalon\",\n  \"effective_date\": \"January 1, 2027\",\n  \"value\": null,\n  \"unit\": null,\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"reporting\",\n  \"rule_quote\": \"Every employer shall give each newly hired employee, on the first day of work, a written notice stating the employee's hourly rate of pay and regular payday.\",\n  \"date_quote\": null\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "820c1296a098e46c",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 2.1, titled 'Minimum Wage':\nJurisdiction: Calder\nEffective Date: January 1, 2027\nEvery employer shall pay each covered employee a wage of not less than $15.50 per hour for all hours worked.",
+      "reply": "{\n  \"section\": \"2.1\",\n  \"title\": \"Minimum Wage\",\n  \"jurisdiction\": \"Calder\",\n  \"effective_date\": \"January 1, 2027\",\n  \"value\": \"15.50\",\n  \"unit\": \"dollars per hour\",\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"wages\",\n  \"rule_quote\": \"Every employer shall pay each covered employee a wage of not less than $15.50 per hour for all hours worked.\",\n  \"date_quote\": null\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "dbeae8d051756b87",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 2.2, titled 'Quarterly Wage Report Filing':\nJurisdiction: Calder\nEffective Date: January 1, 2027\nEvery employer shall file the quarterly wage and contribution report with the Department within 20 calendar days after the close of each calendar quarter.",
+      "reply": "{\n  \"section\": \"2.2\",\n  \"title\": \"Quarterly Wage Report Filing\",\n  \"jurisdiction\": \"Calder\",\n  \"effective_date\": \"January 1, 2027\",\n  \"value\": \"20\",\n  \"unit\": \"days\",\n  \"day_type\": \"calendar\",\n  \"obligation\": \"shall\",\n  \"category\": \"filing_deadline\",\n  \"rule_quote\": \"Every employer shall file the quarterly wage and contribution report with the Department within 20 calendar days after the close of each calendar quarter.\",\n  \"date_quote\": \"Effective Date: January 1, 2027\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "e7395a636d760629",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 2.3, titled 'Annual Earnings Report':\nJurisdiction: Calder\nEvery employer shall report to the Department, twice each calendar year, the total earnings paid to and hours worked by each employee.",
+      "reply": "{\n  \"section\": \"2.3\",\n  \"title\": \"Annual Earnings Report\",\n  \"jurisdiction\": \"Calder\",\n  \"effective_date\": \"missing\",\n  \"value\": null,\n  \"unit\": null,\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"reporting\",\n  \"rule_quote\": \"Every employer shall report to the Department, twice each calendar year, the total earnings paid to and hours worked by each employee.\",\n  \"date_quote\": null\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "e9904aac5f5e8651",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 3.1, titled 'Minimum Wage':\nJurisdiction: Meridian\nEffective Date: January 1, 2026\nEvery employer shall pay each covered employee a wage of not less than $13.75 per hour for all hours worked.",
+      "reply": "{\n  \"section\": \"3.1\",\n  \"title\": \"Minimum Wage\",\n  \"jurisdiction\": \"Meridian\",\n  \"effective_date\": \"January 1, 2026\",\n  \"value\": \"13.75\",\n  \"unit\": \"dollars per hour\",\n  \"day_type\": null,\n  \"obligation\": \"shall\",\n  \"category\": \"wages\",\n  \"rule_quote\": \"Every employer shall pay each covered employee a wage of not less than $13.75 per hour for all hours worked.\",\n  \"date_quote\": \"Effective Date: January 1, 2026\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "f85419d40de0728f",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 3.2, titled 'Overtime Pay':\nJurisdiction: Meridian\nEffective Date: January 1, 2026\nFor each hour worked beyond 40 hours in a single workweek, an employer must compensate a non-exempt employee at one and one-half times that employee's regular rate of pay.",
+      "reply": "{\n  \"section\": \"3.2\",\n  \"title\": \"Overtime Pay\",\n  \"jurisdiction\": \"Meridian\",\n  \"effective_date\": \"January 1, 2026\",\n  \"value\": null,\n  \"unit\": null,\n  \"day_type\": null,\n  \"obligation\": \"must\",\n  \"category\": \"wages\",\n  \"rule_quote\": \"For each hour worked beyond 40 hours in a single workweek, an employer must compensate a non-exempt employee at one and one-half times that employee's regular rate of pay.\",\n  \"date_quote\": \"Effective Date: January 1, 2026\"\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    },
+    {
+      "kind": "read_section",
+      "role": "reader",
+      "prompt_hash": "57018c757c77ac81",
+      "system": "You read one numbered section of a payroll policy and extract its facts. Extract: section, title, jurisdiction, effective date exactly as written (or \"missing\"), value (the dollar amount, percentage or day count the rule sets, digits exactly as written in the rule sentence, without $ or %; null if the rule sets none), unit (dollars per hour, percent, days), calendar or business days, obligation (shall, must, may), category, the rule sentence quoted, and the date line quoted.\n\nCategory definitions: wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must be reported, or given or shown to employees (pay statements, notices). If none fits, answer \"unclear\".\n\nUse these exact labels in the JSON answer. Category: wages, tax_rate, filing_deadline, reporting, unclear. Change type: substantive, wording_only, added, removed.\n\nEvery quote and every value must be copied exactly from the section text, character for character. Never paraphrase a quote and never calculate or guess a value. If something is not in the text, say so (effective date: missing; value: null) instead of inventing it. Answer with JSON only.",
+      "user": "Read section 3.3, titled 'New Hire Reporting':\nJurisdiction: Meridian\nEffective Date: To be determined\nEvery employer shall report each newly hired or rehired employee to the Department within 10 calendar days of the employee's first day of work.",
+      "reply": "{\n  \"section\": \"3.3\",\n  \"title\": \"New Hire Reporting\",\n  \"jurisdiction\": \"Meridian\",\n  \"effective_date\": \"To be determined\",\n  \"value\": \"10\",\n  \"unit\": \"days\",\n  \"day_type\": \"calendar\",\n  \"obligation\": \"shall\",\n  \"category\": \"reporting\",\n  \"rule_quote\": \"Every employer shall report each newly hired or rehired employee to the Department within 10 calendar days of the employee's first day of work.\",\n  \"date_quote\": null\n}",
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "replayed": false,
+      "retries": 0
+    }
+  ]
+}
