@@ -13,3 +13,4 @@ dist/
 
 # Local databases
 *.db
+.maya_fingerprints.json

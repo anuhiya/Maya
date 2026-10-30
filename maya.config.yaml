@@ -9,11 +9,13 @@ jurisdictions:
 
 policies:
   main_pair:
+    policy_family: regional-dol-payroll-bulletin
     old: data/policies/gov_rules_v1.txt
     new: data/policies/gov_rules_v2.txt
     old_pdf: data/policies/gov_rules_v1.pdf
     new_pdf: data/policies/gov_rules_v2.pdf
   company_pair:
+    policy_family: larkspur-pay-policy
     old: data/company_policies/company_pay_policy_v1.txt
     new: data/company_policies/company_pay_policy_v2.txt
     pdf: data/company_policies/company_pay_policy.pdf
@@ -25,6 +27,7 @@ sources:
     kind: policy_site
     path: data/policy_site
     unpublished: data/policy_site/_unpublished
+    policy_family: regional-dol-payroll-bulletin
     trusted: true
   - name: Company policies
     kind: folder
@@ -37,3 +40,16 @@ sources:
     kind: federal_register
     url: https://www.federalregister.gov/api/v1
     trusted: false
+
+# The fictional site the agent watches. Held-back versions are published in this order (file stems).
+site:
+  dir: data/policy_site
+  unpublished_dir: data/policy_site/_unpublished
+  index_file: data/policy_site/index.json
+  release_order:
+    - gov_rules_v3
+
+# Saved state that reset() clears. Both files are gitignored.
+state:
+  database: maya.db
+  fingerprints: .maya_fingerprints.json
