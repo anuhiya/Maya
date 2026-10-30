@@ -19,6 +19,7 @@ from maya.models import (
     ImpactResult,
     ImpactRow,
     LogTag,
+    Section,
     Status,
     Timing,
     WorkArrangement,
@@ -114,3 +115,15 @@ def test_same_section_in_v2_and_v3_gets_same_id():
     in_gov_rules_v2 = finding_id(family, "3.1", Category.WAGES)
     in_gov_rules_v3 = finding_id(family, "3.1", Category.WAGES)
     assert in_gov_rules_v2 == in_gov_rules_v3
+
+
+def test_section_jurisdiction_and_effective_date():
+    dated = Section(
+        number="1.1", title="Wages", text="x",
+        jurisdiction="Ontario", effective_date="1 Jan 2026",
+    )
+    assert dated.jurisdiction == "Ontario"
+    assert dated.effective_date == "1 Jan 2026"
+    undated = Section(number="1.2", title="Tax", text="y", jurisdiction="Ontario")
+    assert undated.effective_date is None
+    assert Section(number="1.3", title="T", text="z").jurisdiction is None

@@ -119,6 +119,8 @@ class Section(BaseModel):
     number: str
     title: str
     text: str
+    jurisdiction: str | None = None
+    effective_date: str | None = None  # exactly as written, None if no line
 
 
 class ExtractedFacts(BaseModel):
