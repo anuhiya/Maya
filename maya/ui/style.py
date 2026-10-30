@@ -49,6 +49,8 @@ CSS = """
 .mq-when { text-align: right; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; color: #6B6259; }
 .st-key-signoff button, .st-key-clear_filters button, .st-key-confirm_yes button, .st-key-publish button { white-space: nowrap; }
 .mq-scroll { overflow-x: auto; }
+.mq-table td.nw, .mq-table th.nw { white-space: nowrap; overflow-wrap: normal; }
+.mq-table td.wrap, .mq-table th.wrap { min-width: 16rem; }
 .mq-table td, .mq-table th { overflow-wrap: anywhere; }
 .mq-hist { font-size: 0.86rem; border-left: 3px solid #E5DCCD; padding: 0.1rem 0 0.1rem 0.7rem; margin-bottom: 0.5rem; }
 .mq-hist .when { font-family: "IBM Plex Mono", monospace; color: #6B6259; font-size: 0.76rem; }

@@ -398,16 +398,18 @@ def render_impact(i: Item) -> None:
         st.markdown(f"**Weekly increase, {TIMING_LABELS[i.finding.timing].lower()}: {md(money(total))}** "
                     f"({md(money(annual))} {label})")
     order = {ImpactResult.AFFECTED: 0, ImpactResult.NEEDS_REVIEW: 1}
-    heads = ["Employee", "Type", "Wage", "Hours a week", "Result", "Why", "Increase a week", "Calculation"]
+    heads = ["Employee", "Type", "Wage", "Hours a week", "Result", "Why", "Weekly increase", "Calculation"]
+    wraps = {"Why", "Calculation"}
     body = ""
     for r in sorted(rows, key=lambda r: (order.get(r.result, 2), r.employee_id)):
         inc = f"{r.weekly_increase:.2f}" if r.weekly_increase is not None else ""
         cells = [(r.employee_id, "mono"), (r.employment_type.value.replace("_", " "), ""),
                  (f"{r.hourly_wage:.2f}", "mono"), (f"{r.weekly_hours.normalize():f}", "mono"),
                  (RESULT_LABELS[r.result], ""), (r.reason, ""), (inc, "mono"), (r.calculation, "mono")]
-        body += "<tr>" + "".join(f'<td class="{k}">{esc(v)}</td>' for v, k in cells) + "</tr>"
+        body += "<tr>" + "".join(f'<td class="{k} {"wrap" if h in wraps else "nw"}">{esc(v)}</td>'
+                                 for (v, k), h in zip(cells, heads)) + "</tr>"
     st.markdown('<div class="mq-scroll"><table class="mq-table"><tr>'
-                + "".join(f"<th>{h}</th>" for h in heads) + f"</tr>{body}</table></div>", unsafe_allow_html=True)
+                + "".join(f'<th class="{"wrap" if h in wraps else "nw"}">{h}</th>' for h in heads) + f"</tr>{body}</table></div>", unsafe_allow_html=True)
 
 
 def render_decision(i: Item, conn, reviewer: str) -> None:
@@ -476,6 +478,16 @@ def render_detail(i: Item, comparison: Comparison, as_of: date, conn, reviewer: 
 
 # ---- the page -------------------------------------------------------------------------------
 
+SHARED_KEYS = ("pair", "as_of", "reviewer", *FILTERS)
+
+
+def keep_context() -> None:
+    """Re-assign the shared widget keys so Streamlit keeps them when another page is shown."""
+    for key in SHARED_KEYS:
+        if key in st.session_state:
+            st.session_state[key] = st.session_state[key]
+
+
 def _clear_filters() -> None:
     for key, (_, placeholder) in FILTERS.items():
         st.session_state[key] = placeholder
@@ -483,6 +495,7 @@ def _clear_filters() -> None:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    keep_context()
     st.markdown('<div class="mq-kicker">Review queue</div>', unsafe_allow_html=True)
     pairs = policy_pairs(cfg)
     if not pairs:
@@ -491,7 +504,9 @@ def render(cfg: dict | None = None) -> None:
 
     c1, c2, c3, c4 = st.columns([3, 1.4, 1.6, 1.6])
     pair = c1.selectbox("Policy pair", pairs, format_func=lambda p: p.label, key="pair")
-    as_of = c2.date_input("As of", value=parse_date(str(cfg["as_of_date"])), key="as_of")
+    if "as_of" not in st.session_state:
+        st.session_state["as_of"] = parse_date(str(cfg["as_of_date"]))
+    as_of = c2.date_input("As of", key="as_of")
     reviewer = c3.text_input("Reviewer name", key="reviewer", placeholder="Your name")
     c4.markdown("Approval mode")
     c4.markdown(chip("Pre-approve", "accent"), unsafe_allow_html=True)
