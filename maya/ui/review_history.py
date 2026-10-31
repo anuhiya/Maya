@@ -64,10 +64,10 @@ def render(cfg: dict | None = None) -> None:
     st.caption(f"{len(shown)} of {len(decisions)} decisions. History is append-only: nothing here can be edited or deleted.")
     body = ""
     for d in shown:
-        cells = [(esc(eastern(d.decided_at)), "mono nw"), (esc(name(d.finding_id)), ""),
-                 (rq.status_chip(d.status), "nw"), (esc(d.comment), ""), (esc(d.decided_by), "nw")]
+        cells = [(esc(eastern(d.decided_at)), "mono nw"), (esc(name(d.finding_id)), "wrap"),
+                 (rq.status_chip(d.status), "nw"), (esc(d.comment), "wrap"), (esc(d.decided_by), "nw")]
         body += "<tr>" + "".join(f'<td class="{k}">{x}</td>' for x, k in cells) + "</tr>"
     heads = ["Time", "Finding", "Status", "Comment", "Decided by"]
     nowrap_heads = ("Time", "Status", "Decided by")
-    st.markdown('<div class="mq-scroll"><table class="mq-table"><tr>' + "".join(f'<th class="{"nw" if h in nowrap_heads else ""}">{h}</th>' for h in heads)
+    st.markdown('<div class="mq-scroll"><table class="mq-table"><tr>' + "".join(f'<th class="{"nw" if h in nowrap_heads else ("wrap" if h in ("Finding", "Comment") else "")}">{h}</th>' for h in heads)
                 + f"</tr>{body}</table></div>", unsafe_allow_html=True)

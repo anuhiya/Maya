@@ -378,10 +378,10 @@ def render_facts(i: Item) -> None:
             ("Effective date", old_date(f), f.effective_date or "No effective date found"
              if f.change_type is not ChangeType.REMOVED else "none"),
             ("Rule", f.old_rule or "none", f.new_rule or "none")]
-    body = "".join(f'<tr><td>{esc(a)}</td><td class="mono">{esc(b)}</td><td class="mono"><b>{esc(c)}</b></td></tr>'
+    body = "".join(f'<tr><td class="fld">{esc(a)}</td><td class="mono rule">{esc(b)}</td><td class="mono rule"><b>{esc(c)}</b></td></tr>'
                    for a, b, c in rows)
-    st.markdown('<div class="mq-sub">Extracted facts</div><table class="mq-table"><tr><th>Field</th>'
-                f'<th>Previous rule</th><th>Updated rule</th></tr>{body}</table>', unsafe_allow_html=True)
+    st.markdown('<div class="mq-sub">Extracted facts</div><table class="mq-table"><tr><th class="fld">Field</th>'
+                f'<th class="rule">Previous rule</th><th class="rule">Updated rule</th></tr>{body}</table>', unsafe_allow_html=True)
 
 
 def render_impact(i: Item) -> None:

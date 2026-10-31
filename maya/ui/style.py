@@ -7,6 +7,7 @@ BG, SURFACE, INK, MUTED, LINE, ACCENT = "#F3EEE6", "#FFFCF7", "#23201C", "#6B625
 
 CSS = """
 <style>
+[data-testid="stMainBlockContainer"], .block-container { padding-top: 1.5rem; }
 .mq-kicker { color: #6B6259; font-size: 0.8rem; margin-bottom: 0.1rem; }
 .mq-title { font-family: Fraunces, serif; font-weight: 600; font-size: 1.6rem; letter-spacing: -0.02em; margin: 0 0 0.6rem 0; }
 .mq-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; margin: 0.5rem 0 1rem 0; }
@@ -39,8 +40,8 @@ CSS = """
 .mq-exc del { text-decoration: line-through; background: transparent; color: #A23A2C; font-weight: 600; }
 .mq-exc mark { background: #BFD8B8; color: #23201C; padding: 0 0.15rem; border-radius: 3px; font-weight: 600; }
 .mq-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; background: #FFFCF7; border: 1px solid #E5DCCD; }
-.mq-table th { text-align: left; color: #6B6259; font-weight: 600; padding: 0.4rem 0.6rem; border-bottom: 1px solid #E5DCCD; }
-.mq-table td { padding: 0.4rem 0.6rem; border-bottom: 1px solid #E5DCCD; vertical-align: top; }
+.mq-table th { text-align: left; color: #6B6259; font-weight: 600; padding: 0.5rem 0.75rem; border-bottom: 1px solid #E5DCCD; }
+.mq-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #E5DCCD; vertical-align: top; }
 .mq-table td.mono { font-family: "IBM Plex Mono", monospace; }
 [class*="st-key-row_"], [class*="st-key-rowsel_"] { border-bottom: 1px solid #E5DCCD; padding: 0.4rem 0.6rem 0.2rem 0.6rem; gap: 0; }
 [class*="st-key-rowsel_"] { background: #F6E4DC; border-left: 3px solid #B5472A; }
@@ -51,7 +52,9 @@ CSS = """
 .mq-scroll { overflow-x: auto; }
 .mq-table td.nw, .mq-table th.nw { white-space: nowrap; overflow-wrap: normal; }
 .mq-table td.wrap, .mq-table th.wrap { min-width: 16rem; }
-.mq-table td, .mq-table th { overflow-wrap: anywhere; }
+.mq-table td, .mq-table th { overflow-wrap: break-word; word-break: normal; }
+.mq-table td.fld, .mq-table th.fld { width: 160px; min-width: 160px; white-space: nowrap; }
+.mq-table td.rule, .mq-table th.rule { min-width: 16rem; }
 .mq-hist { font-size: 0.86rem; border-left: 3px solid #E5DCCD; padding: 0.1rem 0 0.1rem 0.7rem; margin-bottom: 0.5rem; }
 .mq-hist .when { font-family: "IBM Plex Mono", monospace; color: #6B6259; font-size: 0.76rem; }
 .mq-foot { color: #5C544A; font-size: 0.75rem; line-height: 1.4; }
