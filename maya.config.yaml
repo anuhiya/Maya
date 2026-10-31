@@ -29,6 +29,11 @@ sources:
     unpublished: data/policy_site/_unpublished
     policy_family: regional-dol-payroll-bulletin
     trusted: true
+  - name: Government bulletins
+    kind: folder
+    path: data/policies
+    policy_family: regional-dol-payroll-bulletin
+    trusted: true
   - name: Company policies
     kind: folder
     path: data/company_policies
