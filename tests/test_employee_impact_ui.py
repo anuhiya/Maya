@@ -82,3 +82,11 @@ def test_hybrid_review_rows_shown_without_changing_totals(cfg):
     assert "Needs review: works part of the week in Calder" in shown
     assert "1.45 x 40 h = $58.00" in shown and "0.30 x 24 h = $7.20" in shown
     assert "$273.19" in shown and "$142.80" in shown
+
+
+def test_total_cost_panel(cfg):
+    shown = text(run(cfg))
+    for expected in ("Total cost", "$273.19", "$20.90", "$294.09", "$14,205.88", "$1,086.75", "$7,425.60",
+                     "Flagged", "Needs reviewer input", "Unemployment tax change", "Back pay"):
+        assert expected in shown
+    assert "—" not in shown

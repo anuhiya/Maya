@@ -52,5 +52,17 @@ def impact_csv(impact_rows: list) -> str:
     return _csv(IMPACT_EXPORT_COLUMNS, [r.model_dump() for r in impact_rows])
 
 
+EMPLOYEE_TOTALS_COLUMNS = ("employee_id", "changes", "increase_now", "increase_coming", "coming_dates",
+                           "employer_tax", "total", "flags")
+
+
+def employee_totals_csv(employees: list) -> str:
+    """X1 per-employee totals. Kept apart so the impact CSV keeps its documented columns (B7)."""
+    return _csv(EMPLOYEE_TOTALS_COLUMNS, [
+        {"employee_id": e.employee_id, "changes": e.changes, "increase_now": e.now,
+         "increase_coming": e.coming, "coming_dates": e.coming_dates, "employer_tax": e.tax,
+         "total": e.total, "flags": e.flags} for e in employees])
+
+
 def file_name(kind: str, as_of: date) -> str:
     return f"maya_{kind}_{as_of.isoformat()}.csv"

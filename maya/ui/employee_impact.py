@@ -37,6 +37,30 @@ def totals_table(rows: list, jurisdictions: list[str]) -> str:
     return ('<table class="mq-table"><tr>' + "".join(f"<th>{h}</th>" for h in heads) + f"</tr>{body}</table>")
 
 
+def cost_panel(shown: list) -> str:
+    """X1 total cost panel and per-employee totals. Flagged lines show a status, never a number."""
+    panel = cost.total_cost([(i.finding, i.rows) for i in shown])
+    body = ""
+    for x in panel.lines:
+        weekly = money(x.weekly) if x.weekly is not None else "Not calculated"
+        yearly = money(x.yearly) if x.yearly is not None else "Not calculated"
+        cells = [(x.label, "wrap"), (weekly, "mono nw"), (yearly, "mono nw"), (x.status, "nw"), (x.note, "wrap")]
+        body += "<tr>" + "".join(f'<td class="{k}">{esc(t)}</td>' for t, k in cells) + "</tr>"
+    heads = ["Line", "Per week", "Yearly (52 weeks)", "Status", "Note"]
+    out = ('<div class="mq-scroll"><table class="mq-table"><tr>' + "".join(f"<th>{h}</th>" for h in heads)
+           + f"</tr>{body}</table></div>")
+    body = ""
+    for e in panel.employees:
+        cells = [(e.employee_id, "mono"), (e.changes, "wrap"), (money(e.now), "mono nw"),
+                 (money(e.coming), "mono nw"), (e.coming_dates, "nw"), (money(e.tax), "mono nw"),
+                 (money(e.total), "mono nw"), (e.flags, "wrap")]
+        body += "<tr>" + "".join(f'<td class="{k}">{esc(t)}</td>' for t, k in cells) + "</tr>"
+    heads = ["Employee", "Changes", "Increase now", "Increase coming", "Coming from", "Employer tax", "Total", "Flags"]
+    return (out + '<div class="mq-sub">Per employee, adds up to the panel</div>'
+            '<div class="mq-scroll"><table class="mq-table"><tr>' + "".join(f"<th>{h}</th>" for h in heads)
+            + f"</tr>{body}</table></div>")
+
+
 def results_table(shown: list) -> str:
     heads = ["Employee", "Finding", "Timing", "Result", "Why", "Rule", "Calculation", "Weekly increase"]
     wraps = {"Why", "Calculation"}
@@ -78,6 +102,7 @@ def render(cfg: dict | None = None) -> None:
         rows = [r for i in view.shown for r in i.rows]
         st.markdown(f'<div class="mq-sub">Totals by jurisdiction</div>'
                     + totals_table(rows, cfg["jurisdictions"]), unsafe_allow_html=True)
+        st.markdown('<div class="mq-sub">Total cost</div>' + cost_panel(view.shown), unsafe_allow_html=True)
         st.markdown('<div class="mq-sub">All employees for the selected findings</div>', unsafe_allow_html=True)
         st.caption(f"{len(rows)} results for {len(view.shown)} findings.")
         st.markdown(results_table(view.shown), unsafe_allow_html=True)
