@@ -1,5 +1,6 @@
 """Review history page on a temp database (B6)."""
 import html
+import re
 
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -87,3 +88,12 @@ def test_known_finding_is_labelled(cfg):
     wage = next(f for f in result.findings if f.section == "1.1")
     decide(cfg, wage.finding_id, Status.APPROVED, "Pavan", "ok")
     assert "Section 1.1 Avalon" in text(run(cfg))
+
+
+def test_status_and_decided_by_cells_do_not_wrap(cfg):
+    decide(cfg, "aaaaaaaaaaaa", Status.APPROVED, routing.AUTO_APPROVED, "passed checks")
+    shown = text(run(cfg))
+    nowrap = re.findall(r'<td class="[^"]*\bnw\b[^"]*">(.*?)</td>', shown)
+    assert any("Approved" in c for c in nowrap)
+    assert routing.AUTO_APPROVED in nowrap
+    assert len(re.findall(r'<th class="nw">', shown)) == 3
