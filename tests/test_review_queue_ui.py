@@ -91,3 +91,10 @@ def test_copy_rules(cfg):
     shown = text(at)
     for banned in ("rule A1", "\u00a7", "\u00b7", "\u2014", "Auto-approve"):
         assert banned not in shown
+
+
+def test_as_of_has_no_widget_warning_and_keeps_value(cfg):
+    at = run(cfg)
+    assert not at.warning
+    at.date_input(key="as_of").set_value("2027-01-01").run()
+    assert str(at.session_state["as_of"]) == "2027-01-01" and not at.warning
