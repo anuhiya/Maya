@@ -126,3 +126,56 @@ def test_decide_dismiss_without_comment_is_refused(conn):
     with pytest.raises(ValueError):
         routing.decide(conn, "f1", Status.DISMISSED, "Dana", "  ")
     assert db.history(conn) == []
+
+
+def ready_routes():
+    return {EXPECTED[s][0].finding_id: route(EXPECTED[s][0]) for s in EXPECTED if not EXPECTED[s][1]}
+
+
+def test_auto_approve_is_a_mode_but_pre_approve_stays_the_default():
+    assert routing.approval_mode({"routing": {"approval_mode": "auto_approve"}}) is routing.ApprovalMode.AUTO_APPROVE
+    assert routing.approval_mode(load_config()) is routing.ApprovalMode.PRE_APPROVE
+    assert routing.approval_mode({}) is routing.ApprovalMode.PRE_APPROVE
+
+
+def test_auto_approve_approves_exactly_the_ready_findings_with_conditions_as_comment(conn):
+    routes = ready_routes()
+    assert len(routes) == 3
+    routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes)
+    rows = db.history(conn)
+    assert len(rows) == 3
+    for row in rows:
+        assert row.status is Status.APPROVED and row.decided_by == routing.AUTO_APPROVED == "Auto-approved"
+        assert row.comment == "; ".join(routes[row.finding_id].passed_conditions)
+
+
+def test_auto_approve_leaves_reviewer_cases_pending_and_writes_nothing_for_them(conn):
+    routes = {f.finding_id: route(f) for f, reasons in EXPECTED.values() if reasons}
+    assert routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes) == []
+    assert db.history(conn) == []
+    assert all(db.current_status(conn, fid) is Status.PENDING for fid in routes)
+
+
+def test_pre_approve_apply_mode_writes_nothing(conn):
+    assert routing.apply_mode(conn, routing.ApprovalMode.PRE_APPROVE, ready_routes()) == []
+    assert db.history(conn) == []
+
+
+def test_auto_approve_is_idempotent_and_never_overrides_a_person(conn):
+    routes = ready_routes()
+    person = EXPECTED["1.1"][0]
+    routing.decide(conn, person.finding_id, Status.DISMISSED, "Dana", "Wrong rate")
+    routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes)
+    routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes)
+    assert len(db.history(conn)) == 3  # the dismissal plus two auto approvals, once each
+    assert db.current_status(conn, person.finding_id) is Status.DISMISSED
+
+
+def test_reversing_an_auto_approval_adds_a_row_and_is_not_redone(conn):
+    routes = ready_routes()
+    f = EXPECTED["1.1"][0]
+    routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes)
+    routing.decide(conn, f.finding_id, Status.PENDING, "Dana", "Checking again")
+    routing.apply_mode(conn, routing.ApprovalMode.AUTO_APPROVE, routes)
+    assert [d.status for d in db.history(conn, f.finding_id)] == [Status.PENDING, Status.APPROVED]
+    assert {d.status for d in db.history(conn)} <= {Status.PENDING, Status.APPROVED, Status.DISMISSED}

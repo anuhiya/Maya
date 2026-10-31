@@ -104,3 +104,23 @@ def test_impact_caption_counts_only_own_jurisdiction(cfg):
     captions = [c.value for c in run(cfg).caption if "employees checked" in c.value]
     assert captions == ["28 Avalon employees checked: 10 affected, 12 not affected, 6 excluded. "
                         "Also listed for review: 1 hybrid employee working part of the week here."]
+
+
+def test_default_mode_is_pre_approve_with_the_sign_off_button(cfg):
+    at = run(cfg)
+    assert at.toggle(key="auto_approve").value is False
+    assert at.button(key="signoff") is not None
+    assert db.history(db.connect(cfg["state"]["database"])) == []
+
+
+def test_auto_approve_mode_approves_the_ready_three_and_hides_sign_off(cfg):
+    at = run(cfg)
+    at.toggle(key="auto_approve").set_value(True).run()
+    assert not at.exception
+    decisions = db.history(db.connect(cfg["state"]["database"]))
+    assert len(decisions) == 3
+    assert {(d.status, d.decided_by) for d in decisions} == {(Status.APPROVED, "Auto-approved")}
+    assert not at.get("button") or all(b.key != "signoff" for b in at.button)
+    assert card_values(at)[2] == "0"
+    at.toggle(key="auto_approve").set_value(False).run()
+    assert len(db.history(db.connect(cfg["state"]["database"]))) == 3  # switching back undoes nothing
