@@ -1,13 +1,10 @@
 """Streamlit entry: sidebar wordmark and page routing (A4, B5)."""
 import streamlit as st
 
-PAGES = [
-    ("Agent activity", "agent-activity"),
-    ("Review queue", "review-queue"),
-    ("Employee impact", "employee-impact"),
-    ("Review history", "review-history"),
-    ("Export", "export"),
-]
+from maya.ui import review_queue, style
+
+FOOTER = ("Synthetic, illustrative data. AI reads and judges; code checks and calculates; "
+          "a person decides anything unclear.")
 
 
 def placeholder(title: str):
@@ -18,18 +15,24 @@ def placeholder(title: str):
     return render
 
 
+PAGES = [
+    ("Agent activity", "agent-activity", placeholder("Agent activity")),
+    ("Review queue", "review-queue", review_queue.render),
+    ("Employee impact", "employee-impact", placeholder("Employee impact")),
+    ("Review history", "review-history", placeholder("Review history")),
+    ("Export", "export", placeholder("Export")),
+]
+
 st.set_page_config(page_title="maya.", page_icon=":material/circle:", layout="wide")
+style.inject_css()
 
 pages = [
-    st.Page(placeholder(title), title=title, url_path=path, default=(i == 0))
-    for i, (title, path) in enumerate(PAGES)
+    st.Page(fn, title=title, url_path=path, default=(i == 0))
+    for i, (title, path, fn) in enumerate(PAGES)
 ]
 
 with st.sidebar:
-    st.markdown(
-        '<span style="font-family:Fraunces,serif;font-weight:600;font-size:2rem;'
-        'letter-spacing:-0.02em">maya<span style="color:#B5472A">.</span></span>',
-        unsafe_allow_html=True,
-    )
+    st.markdown(style.wordmark(), unsafe_allow_html=True)
+    st.markdown(f'<div class="mq-foot">{style.esc(FOOTER)}</div>', unsafe_allow_html=True)
 
 st.navigation(pages).run()

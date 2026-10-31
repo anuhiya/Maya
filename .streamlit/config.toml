@@ -1,4 +1,7 @@
 # Terracotta & Paper theme (P2, docs/design.md). Only keys supported by Streamlit 1.66.1.
+[client]
+toolbarMode = "minimal"
+
 [theme]
 base = "light"
 primaryColor = "#B5472A"
