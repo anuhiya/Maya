@@ -37,7 +37,7 @@ def _source_for(path, cfg: dict) -> dict | None:
     return best
 
 
-def _policy_id(old_path, new_path, source: dict | None, cfg: dict) -> str:
+def policy_id(old_path, new_path, source: dict | None, cfg: dict) -> str:
     """Policy family from the config; the file name without its version only as a last resort."""
     paths = {Path(old_path).resolve(), Path(new_path).resolve()}
     for entry in (cfg.get("policies") or {}).values():
@@ -151,7 +151,7 @@ def compare_documents(old_path, new_path, llm=None, cfg=None) -> CompareResult:
     old_sections = {s.number: s for s in read_sections(old_path)}
     new_sections = {s.number: s for s in read_sections(new_path)}
     source = _source_for(new_path, cfg)
-    policy = _policy_id(old_path, new_path, source, cfg)
+    policy = policy_id(old_path, new_path, source, cfg)
     root = cfg["_root"].resolve()
     new_resolved = Path(new_path).resolve()
     source_file = str(new_resolved.relative_to(root)) if new_resolved.is_relative_to(root) else str(new_path)

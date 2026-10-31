@@ -64,9 +64,10 @@ def test_publish_with_nothing_held_back(cfg):
 
 def test_reset_clears_state_files(cfg):
     root = cfg["_root"]
-    fp, db = root / cfg["state"]["fingerprints"], root / cfg["state"]["database"]
-    fp.write_text("{}")
+    up, db = root / "data/uploads", root / cfg["state"]["database"]
+    up.mkdir(parents=True)
+    (up / "a.txt").write_text("x")
     db.write_text("x")
     site.reset(cfg)
-    assert not fp.exists() and not db.exists()
+    assert not up.exists() and not db.exists()
     site.reset(cfg)  # missing files are fine
