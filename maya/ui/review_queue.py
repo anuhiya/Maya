@@ -83,6 +83,11 @@ def policy_pairs(cfg: dict) -> list[Pair]:
         return f"{old.stem} to {new.stem}".replace("_", " ")
 
     pairs, seen = [], set()
+    uploaded = st.session_state.get("upload_pair")  # set by the Agent activity page
+    if uploaded:
+        count = st.session_state.get("upload_count")
+        found = f" ({count} findings)" if count is not None else ""
+        pairs.append(Pair(f"Uploaded: {label(uploaded.old, uploaded.new)}{found}", uploaded.old, uploaded.new))
     for entry in (cfg.get("policies") or {}).values():
         old, new = root / entry["old"], root / entry["new"]
         pairs.append(Pair(label(old, new), old, new))

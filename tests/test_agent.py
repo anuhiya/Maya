@@ -117,3 +117,24 @@ def test_summary_claiming_approval_is_replaced(env):
     result = run(env, flow(2), summary="All 9 findings were approved.")
     assert "approved" not in result.summary and "pending" in result.summary
     assert any(line.tag is LogTag.CHECK and "replaced" in line.text for line in result.log)
+
+
+def test_saved_run_completes_offline_with_the_saved_federal_register(tmp_path, monkeypatch):
+    """The saved demo run needs no network: nine findings, and the Federal Register items stay informational."""
+    shutil.copytree(ROOT / "data", tmp_path / "data", ignore=shutil.ignore_patterns("uploads"))
+    shutil.copy(ROOT / "maya.config.yaml", tmp_path / "maya.config.yaml")
+    cfg = site.load_config(tmp_path / "maya.config.yaml")
+
+    def blocked(*args, **kwargs):
+        raise AssertionError("network used")
+
+    monkeypatch.setattr("socket.socket.connect", blocked)
+    monkeypatch.setattr("maya.sources._get", blocked)
+    llm = LLM(cfg=cfg, env={"MAYA_LLM_PROVIDER": "replay", "MAYA_REPLAY_RUN": "agent_demo"})
+    result = agent.Agent(cfg, agent.LLMPlanner(llm), llm, db.connect(tmp_path / "maya.db")).run()
+    saved = json.loads((ROOT / "data/replays/agent_demo.json").read_text(encoding="utf-8"))["federal_register"]
+    assert result.status == "finished" and len(result.findings) == 9
+    assert [(i.title, i.date, i.url) for i in result.informational] == [(i["title"], i["date"], i["url"]) for i in saved]
+    assert (result.in_effect, result.coming) == (Decimal("273.19"), Decimal("142.80"))  # items add no cost
+    informational = [l for l in result.log if l.text.startswith("Informational:")]
+    assert len(informational) == 5 and all(l.replayed for l in informational)
