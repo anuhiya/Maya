@@ -74,3 +74,11 @@ def test_affected_first_largest_increase_first_and_no_wrap(cfg):
     assert first_run == sorted(first_run, reverse=True) and len(first_run) >= 10
     assert "Weekly increase" in shown and "Increase a week" not in shown
     assert '<th class="wrap">Why</th>' in shown and '<th class="nw">Employee</th>' in shown
+
+
+def test_hybrid_review_rows_shown_without_changing_totals(cfg):
+    shown = text(run(cfg))
+    assert "Needs review: works part of the week in Avalon" in shown
+    assert "Needs review: works part of the week in Calder" in shown
+    assert "1.45 x 40 h = $58.00" in shown and "0.30 x 24 h = $7.20" in shown
+    assert "$273.19" in shown and "$142.80" in shown

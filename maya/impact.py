@@ -22,7 +22,8 @@ def match_finding(finding: Finding, employees: list[Employee], cfg: dict | None 
     if finding.category is Category.UNCLEAR:
         return [_row(finding, e, "none", *_unclear(e)) for e in in_place]
     if finding.category is Category.WAGES:
-        return [_wage_row(finding, e) for e in in_place]
+        return ([_wage_row(finding, e) for e in in_place]
+                + [_hybrid_row(finding, e) for e in employees if _hybrid_shortfall(finding, e)])
     if finding.category is Category.REPORTING and _is_new_hire(finding, cfg):
         return [_row(finding, e, "R4", ImpactResult.NOT_AFFECTED,
                      "applies to future hires only, no current employee") for e in in_place]
@@ -92,3 +93,18 @@ def _wage_row(finding: Finding, e: Employee) -> ImpactRow:
     return _row(finding, e, "R1", ImpactResult.AFFECTED,
                 f"${e.hourly_wage:.2f} is below the new minimum ${minimum_known:.2f}",
                 shown, amount, calc)
+
+
+def _hybrid_shortfall(finding: Finding, e: Employee) -> bool:
+    """Hourly hybrid employee who works part of the week in the finding's jurisdiction, paid below its new minimum."""
+    return (e.secondary_jurisdiction == finding.jurisdiction and e.jurisdiction != finding.jurisdiction
+            and e.employment_type in HOURLY and finding.new_value is not None
+            and e.hourly_wage < finding.new_value)
+
+
+def _hybrid_row(finding: Finding, e: Employee) -> ImpactRow:
+    """R1 for a hybrid employee: the split of hours is unknown, so a reviewer decides and nothing is totalled."""
+    _, bound = weekly_increase(e.hourly_wage, e.weekly_hours, finding.new_value)
+    return _row(finding, e, "R1", ImpactResult.NEEDS_REVIEW,
+                f"Needs review: works part of the week in {finding.jurisdiction}", finding.new_value,
+                calc=f"Indicative upper bound, all hours at the new minimum: {bound}")

@@ -98,3 +98,9 @@ def test_as_of_has_no_widget_warning_and_keeps_value(cfg):
     assert not at.warning
     at.date_input(key="as_of").set_value("2027-01-01").run()
     assert str(at.session_state["as_of"]) == "2027-01-01" and not at.warning
+
+
+def test_impact_caption_counts_only_own_jurisdiction(cfg):
+    captions = [c.value for c in run(cfg).caption if "employees checked" in c.value]
+    assert captions == ["28 Avalon employees checked: 10 affected, 12 not affected, 6 excluded. "
+                        "Also listed for review: 1 hybrid employee working part of the week here."]
