@@ -40,7 +40,8 @@ def test_avalon_minimum_wage(employees):
     assert len(affected) == 10
     assert sum_by_timing(rows)[Timing.CURRENT] == D("273.19")
     assert annualized(D("273.19"))[0] == D("14205.88")
-    assert all(r.jurisdiction == "Avalon" for r in rows)
+    assert all(r.jurisdiction == "Avalon" for r in rows if r.result is not R.NEEDS_REVIEW)
+    assert [r.employee_id for r in rows if r.result is R.NEEDS_REVIEW] == ["E076"]
     assert all(r.reason and r.rule_id == "R1" for r in rows)
 
 
@@ -65,7 +66,8 @@ def test_every_employee_in_jurisdiction_gets_a_row(employees):
     for juris in ("Avalon", "Calder", "Meridian"):
         expected = {e.employee_id for e in employees if e.jurisdiction == juris}
         rows = match_finding(wage(juris, "99", Timing.CURRENT), employees)
-        assert {r.employee_id for r in rows} == expected
+        assert expected <= {r.employee_id for r in rows}
+        assert {r.employee_id for r in rows if r.jurisdiction == juris} == expected
 
 
 # employee_id: (finding value, result, weekly increase, calculation)
@@ -112,8 +114,41 @@ def test_remote_calder_worker_with_avalon_office_not_hit_by_avalon(employees):
 
 def test_hybrid_employee_is_matched_by_primary_jurisdiction_only(employees):
     avalon = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)
-    assert "E076" not in avalon and "E078" not in avalon
+    assert avalon["E076"].jurisdiction == "Calder"  # only a hybrid review row, see below
+    assert avalon["E076"].result is R.NEEDS_REVIEW
+    assert "E078" not in avalon  # secondary is Calder, not Avalon
     assert avalon["E077"].result is R.NOT_AFFECTED
+
+
+def test_hybrid_below_secondary_minimum_needs_review_with_upper_bound(employees):
+    row = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)["E076"]
+    assert row.result is R.NEEDS_REVIEW
+    assert row.reason == "Needs review: works part of the week in Avalon"
+    assert row.weekly_increase is None
+    assert "1.45 x 40 h = $58.00" in row.calculation and "upper bound" in row.calculation.lower()
+    assert row.new_minimum == D("17.25")
+    row = rows_for(wage("Calder", "15.50", Timing.FUTURE), employees)["E078"]
+    assert row.result is R.NEEDS_REVIEW
+    assert row.reason == "Needs review: works part of the week in Calder"
+    assert "0.30 x 24 h = $7.20" in row.calculation and row.timing is Timing.FUTURE
+
+
+def test_hybrid_review_rows_never_enter_totals(employees):
+    for juris, value, timing, total in (("Avalon", "17.25", Timing.CURRENT, "273.19"),
+                                        ("Calder", "15.50", Timing.FUTURE, "142.80")):
+        rows = match_finding(wage(juris, value, timing), employees)
+        assert any(r.result is R.NEEDS_REVIEW for r in rows)
+        assert sum_by_timing(rows)[timing] == D(total)
+
+
+def test_hybrid_at_or_above_secondary_minimum_gets_no_row(employees):
+    assert "E076" not in rows_for(wage("Avalon", "15.80", Timing.CURRENT), employees)
+    assert "E076" not in rows_for(wage("Avalon", "15.00", Timing.CURRENT), employees)
+
+
+def test_hybrid_review_only_for_wage_findings(employees):
+    f = finding("Avalon", Category.TAX_RATE, "3.1", Timing.FUTURE)
+    assert "E076" not in rows_for(f, employees)
 
 
 def test_exempt_is_excluded_without_warning_and_reason_names_implied_rate(employees):

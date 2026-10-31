@@ -386,11 +386,14 @@ def render_impact(i: Item) -> None:
     if not rows:
         st.caption(f"No current {i.finding.jurisdiction} employees are matched by this change.")
         return
+    own = [r for r in rows if r.jurisdiction == i.finding.jurisdiction]
     counts = {}
-    for r in rows:
+    for r in own:
         counts[r.result] = counts.get(r.result, 0) + 1
     parts = ", ".join(f"{n} {RESULT_LABELS[k].lower()}" for k, n in counts.items())
-    st.caption(md(f"{len(rows)} {i.finding.jurisdiction} employees checked: {parts}."))
+    hybrid = len(rows) - len(own)
+    note = f" Also listed for review: {hybrid} hybrid {'employee' if hybrid == 1 else 'employees'} working part of the week here." if hybrid else ""
+    st.caption(md(f"{len(own)} {i.finding.jurisdiction} employees checked: {parts}.{note}"))
     affected = [r for r in rows if r.result is ImpactResult.AFFECTED]
     if affected:
         total = cost.sum_by_timing(rows)[i.finding.timing]

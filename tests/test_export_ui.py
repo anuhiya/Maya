@@ -60,4 +60,4 @@ def test_avalon_filter_counts_in_exports(cfg):
     findings = [i.finding for i in v.shown]
     rows = [r for i in v.shown for r in i.rows]
     assert len(list(csv.DictReader(io.StringIO(export.findings_csv(findings, conn))))) == 4
-    assert len(list(csv.DictReader(io.StringIO(export.impact_csv(rows))))) == 112
+    assert len(list(csv.DictReader(io.StringIO(export.impact_csv(rows))))) == 113  # 112 Avalon rows + hybrid E076
