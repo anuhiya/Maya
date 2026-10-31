@@ -20,7 +20,8 @@ REASON_UNTRUSTED_OR_FAILED = "Source not trusted, an AI answer failed its check,
 
 
 class ApprovalMode(StrEnum):
-    PRE_APPROVE = "pre_approve"  # the stretch Auto-approve option will be a second member
+    PRE_APPROVE = "pre_approve"  # default and recommended: a person signs off
+    AUTO_APPROVE = "auto_approve"  # optional: findings that pass the rule are approved straight away
 
 
 def approval_mode(cfg: dict) -> ApprovalMode:
@@ -124,3 +125,18 @@ def sign_off(conn: sqlite3.Connection, routes: dict[str, Route], reviewer: str) 
             raise ValueError(f"finding {finding_id} is not pending")
     return [decide(conn, fid, Status.APPROVED, reviewer, "; ".join(r.passed_conditions))
             for fid, r in routes.items()]
+
+
+def auto_approve(conn: sqlite3.Connection, routes: dict[str, Route]) -> list[int]:
+    """Auto-approve mode: approve ready findings that have no history yet, as "Auto-approved".
+
+    A finding a person has touched (any history row, including a reversal) is left alone.
+    The passed conditions are the comment.
+    """
+    return [decide(conn, fid, Status.APPROVED, AUTO_APPROVED, "; ".join(r.passed_conditions))
+            for fid, r in routes.items() if r.ready and not db.history(conn, fid)]
+
+
+def apply_mode(conn: sqlite3.Connection, mode: ApprovalMode, routes: dict[str, Route]) -> list[int]:
+    """Pre-approve writes nothing; Auto-approve records the rule-passing findings."""
+    return auto_approve(conn, routes) if mode is ApprovalMode.AUTO_APPROVE else []

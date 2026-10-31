@@ -307,11 +307,15 @@ def list_meta(i: Item) -> str:
     return f'<div class="mq-meta">{line}<br>{chip(label, kind)}{note}</div>'
 
 
-def render_list(items: list[Item], as_of: date, conn, reviewer: str) -> None:
+def render_list(items: list[Item], as_of: date, conn, reviewer: str,
+                mode: routing.ApprovalMode = routing.ApprovalMode.PRE_APPROVE) -> None:
     ready = [i for i in items if i.route.ready and i.status is Status.PENDING]
     left, right = st.columns([1, 1.5], vertical_alignment="center")
     left.markdown(f"**{len(items)} findings shown**")
-    if right.button(f"Sign off {len(ready)} ready", key="signoff", disabled=not ready or not reviewer.strip()):
+    if mode is routing.ApprovalMode.AUTO_APPROVE:
+        right.caption("Auto-approve is on: findings that pass the rule are approved automatically.")
+        ready = []
+    elif right.button(f"Sign off {len(ready)} ready", key="signoff", disabled=not ready or not reviewer.strip()):
         try:
             routing.sign_off(conn, {i.finding.finding_id: i.route for i in ready}, reviewer.strip())
         except ValueError as err:
@@ -481,7 +485,7 @@ def render_detail(i: Item, comparison: Comparison, as_of: date, conn, reviewer: 
 
 # ---- the page -------------------------------------------------------------------------------
 
-SHARED_KEYS = ("pair", "as_of", "reviewer", *FILTERS)
+SHARED_KEYS = ("pair", "as_of", "reviewer", "auto_approve", *FILTERS)
 
 
 def keep_context() -> None:
@@ -511,8 +515,13 @@ def render(cfg: dict | None = None) -> None:
         st.session_state["as_of"] = parse_date(str(cfg["as_of_date"]))
     as_of = c2.date_input("As of", key="as_of")
     reviewer = c3.text_input("Reviewer name", key="reviewer", placeholder="Your name")
-    c4.markdown("Approval mode")
-    c4.markdown(chip("Pre-approve", "accent"), unsafe_allow_html=True)
+    if "auto_approve" not in st.session_state:
+        st.session_state["auto_approve"] = routing.approval_mode(cfg) is routing.ApprovalMode.AUTO_APPROVE
+    c4.toggle("Auto-approve", key="auto_approve",
+              help="Off is Pre-approve, the recommended mode: a person signs off findings that pass the rule. "
+                   "On records them as approved by Auto-approved.")
+    mode = (routing.ApprovalMode.AUTO_APPROVE if st.session_state["auto_approve"]
+            else routing.ApprovalMode.PRE_APPROVE)
 
     try:
         comparison = _cached_compare(cfg, pair, _stamp(cfg, pair))
@@ -535,6 +544,9 @@ def render(cfg: dict | None = None) -> None:
     conn = db.connect(cfg["_root"] / cfg["state"]["database"])
     try:
         items = build_items(cfg, comparison, as_of, loaded.employees, conn)
+        if routing.apply_mode(conn, mode, {i.finding.finding_id: i.route for i in items
+                                           if i.status is Status.PENDING}):
+            items = build_items(cfg, comparison, as_of, loaded.employees, conn)
         flash = st.session_state.pop("flash", None)
         if flash:
             getattr(st, flash[0])(md(flash[1]))
@@ -561,7 +573,7 @@ def render(cfg: dict | None = None) -> None:
             st.session_state["selected_id"] = shown[0].finding.finding_id
         listing, detail = st.columns([1, 2.2])
         with listing:
-            render_list(shown, as_of, conn, reviewer)
+            render_list(shown, as_of, conn, reviewer, mode)
         with detail:
             chosen = next(i for i in shown if i.finding.finding_id == st.session_state["selected_id"])
             render_detail(chosen, comparison, as_of, conn, reviewer)
