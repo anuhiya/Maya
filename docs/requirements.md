@@ -1,16 +1,13 @@
 # eDelta: requirements (source of truth)
 
 Revised Oct 29, 2026 (second revision, official repo). Every feature, design choice and line of code must
-trace to an ID below. If anything in `docs/plan.md` disagrees with this file, this file wins, and Jon's
-brief (section B) wins over everything else.
-
-Demo: Monday Nov 2, 2026, 4:00 PM ET. The repo link goes to Jon before the meeting.
+trace to an ID below. Section B (the core requirements) wins over everything else.
 
 ---
 
-## B. Jon's written brief (graded, verbatim)
+## B. Core requirements
 
-**Assignment: Payroll Regulatory Change Analysis and Impact Assessment**
+**Payroll Regulatory Change Analysis and Impact Assessment**
 
 Build a prototype that compares two versions of a fictional payroll policy, identifies meaningful
 changes, and assesses which employees may be affected using a synthetic employee dataset.
@@ -27,19 +24,16 @@ changes, and assesses which employees may be affected using a synthetic employee
 | B8 | **Validation examples required:** a minimum wage increase affecting only some employees; a future policy change shown separately from currently effective rules; a missing effective date that requires review; a wording change with no operational impact; a document pair with no changes. |
 | B9 | **Stack:** preferred stack allowed; Python, Streamlit, and SQLite are sufficient. AI tools are optional, no paid services required. If AI is used, explain its role and how its output is verified. |
 | B10 | **Deliverables:** GitHub repository with source code and clear setup instructions; a working local application; sample policy documents and the synthetic employee CSV; meaningful tests for the matching and cost calculation logic; a short README explaining architecture, assumptions, limitations, and individual contributions. |
-| B11 | **Team:** Divide responsibilities so each person owns a meaningful part and understands the whole app; aim for about 10 hours per person; if time runs short, document unfinished features and explain priorities. |
-| B12 | **Presentation:** 10 minute demo with both presenting, then questions; share the repository before the meeting. |
-| B13 | **Evaluation:** accuracy, traceability to the source documents, code quality, handling of uncertainty, and ability to explain technical decisions. |
 
-## A. Aditya's additions (from calls, Oct 28 to 29; what Jon wants beyond the brief)
+## A. Additional requirements
 
 | ID | Requirement |
 | --- | --- |
-| A1 | Jon knows ADP and similar platforms deeply. Follow real payroll practice (effective-dated rules, work-location jurisdiction, overtime, audit trail) and show improvements over those platforms. |
-| A2 | Jon wants an AI agent, not a manual tool: it should search the web and government or official sites for new policies, take them in and process them automatically. |
+| A1 | Follow real payroll practice as in platforms such as ADP (effective-dated rules, work-location jurisdiction, overtime, audit trail) and show improvements over those platforms. |
+| A2 | An AI agent, not a manual tool: it searches the web and government or official sites for new policies, takes them in and processes them automatically. |
 | A3 | Automate definitive changes (a clear $15.00 to $15.50); keep a person in the loop for anything unclear, flagged or needing approval. |
-| A4 | Jon likes to see what is happening in the background while it happens: a live view of the agent's steps, as in Rollcall.ai (https://rollcall-use-cases.vercel.app/). Rollcall's rule: "Rules calculate the dollars. AI identifies, explains and groups. A reviewer decides." |
-| A6 | From Aditya's review (decision of Nov 1, 2026): the whole app uses the eDelta look: a dark navy theme and the eDelta logo from `assets/edelta-logo.png` (about 120px wide in the sidebar, and no logo in page headers, the circular "e" mark as the browser tab icon), instead of the Terracotta & Paper palette and the "maya." wordmark. Status colours stay readable and every status keeps its word. Supersedes the palette and wordmark parts of P2. |
+| A4 | Show what is happening in the background while it happens: a live view of the agent's steps. The principle: rules calculate the dollars, AI identifies, explains and groups, and a reviewer decides. |
+| A6 | Decision of Nov 1, 2026: the whole app uses the eDelta look: a dark navy theme and the eDelta logo from `assets/edelta-logo.png` (about 120px wide in the sidebar, and no logo in page headers, the circular "e" mark as the browser tab icon), instead of the Terracotta & Paper palette and the "maya." wordmark. Status colours stay readable and every status keeps its word. Supersedes the palette and wordmark parts of P2. |
 | A5 | Interactive agent view: pipeline diagram, a right-hand Live AI work panel, step controls, and a collapsed Audit log; the full log is still saved to `agent_runs`. |
 | A8 | Read-only MCP server (optional): findings, employee impact, cost, proposed scenarios and review history for Claude Desktop; no approve or write tool. |
 | A9 | Proposed bill impact analysis: if enacted, if not enacted, AI narrative labelled and V1 verified; scenario totals never added to in-effect or coming totals. |
@@ -54,7 +48,7 @@ changes, and assesses which employees may be affected using a synthetic employee
 | P3 | The agent genuinely uses AI (no code-only shortcuts presented as AI), on the Groq free tier only. No other model provider. |
 | P4 | Work like a real team: branch per change, pull requests reviewed by the other person, tagged versions, CHANGELOG, short decision records, a worklog. |
 | P5 | Split work 50/50 so each person owns a meaningful part. The commit history must honestly show who did what (pairing credited with `Co-authored-by:`, never reassigned later). The README's contributions section must be accurate. |
-| P6 | Each person understands every module well enough to explain it to Jon. |
+| P6 | Each person understands every module well enough to explain it to the other. |
 | P7 | Stand out through engineering depth: tests, CI, traceability, verified AI, clean repo. |
 | P8 | Data-driven: policy files, employee CSV, watched sources and the as-of date come from one config file. No jurisdiction names or section numbers hard-coded in logic, so the team's own synthetic policies, company policies and employees drop in without code changes. All expected answers in `docs/expected.md` must pass with that data. |
 
@@ -91,7 +85,6 @@ Limit to state in the README: even all six layers cannot guarantee a correct rea
 | B9 "AI optional"; P3 AI-driven | AI does reading, comparing, judging and explaining on the Groq free tier. Code checks every AI answer and does all matching and money. A saved run replays if Groq is unreachable, and the app names the missing setting. Nothing paid. |
 | B3 "explicit rules" | Matching (R1 to R4) and cost are plain code with tests. The AI never matches employees or calculates money. |
 | B2 "instead of making assumptions" | Every AI value and quote must appear word for word in the source, numbers are recomputed by code, dates must parse; otherwise a flag goes to the reviewer. |
-| B11 about 10 hours; A items add work | A core of about 10 hours each (see `docs/plan.md`, Work split) covers every B item and the core of A and V; stretch items (about 3 hours each) start only after the core matches `docs/expected.md`. If time runs short, cut from the bottom of the priority list and write it in the README. |
 
 ## Priority order (cut from the bottom, never the top)
 

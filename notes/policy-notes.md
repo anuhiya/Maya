@@ -2,7 +2,7 @@
 
 All documents are fictional. Government files: Regional Department of Labor, Payroll Standards Bulletins
 PSB-2026-01 (old), PSB-2026-02 (new) and PSB-2026-03 (held back). Company file: Larkspur Supply Co. policy
-HR-PAY-04. The as-of date for the demo is 2026-11-02. Employee numbers come from `employees.csv` (80 employees);
+HR-PAY-04. The as-of date is 2026-11-02. Employee numbers come from `employees.csv` (80 employees);
 full per-employee detail is in `employee-data-notes.md`.
 
 ## Files and where they go
