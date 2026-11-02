@@ -135,7 +135,7 @@ def test_key_never_appears_in_logs_errors_or_records(cfg, tmp_path, caplog):
 
 
 def test_prompts_carry_the_definitions_word_for_word():
-    plan = Path(__file__).resolve().parent.parent / "docs" / "plan.md"
+    plan = Path(__file__).resolve().parent.parent / "docs" / "reading-and-comparing.md"
     text = " ".join(plan.read_text(encoding="utf-8").split())
     assert " ".join(prompts.CATEGORY_DEFINITIONS.split()) in text
     for line in prompts.CHANGE_TYPE_DEFINITIONS.splitlines():

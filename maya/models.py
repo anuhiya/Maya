@@ -82,7 +82,7 @@ class LogTag(StrEnum):
     RESULT = "RESULT"
 
 
-# Export columns (B7), in file order, from docs/plan.md "Export columns".
+# Export columns (B7), in file order.
 FINDINGS_EXPORT_COLUMNS: tuple[str, ...] = (
     "finding_id", "section", "jurisdiction", "category", "change_type",
     "old_rule", "new_rule", "old_value", "new_value", "effective_date",
@@ -153,7 +153,7 @@ class CheckResult(BaseModel):
 
 
 class Finding(BaseModel):
-    """Every field under "Each finding stores" in docs/plan.md."""
+    """Every field a finding stores."""
 
     finding_id: str
     section: str

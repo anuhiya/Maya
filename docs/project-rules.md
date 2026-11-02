@@ -1,15 +1,15 @@
 # eDelta: project rules
 
-eDelta is a local Streamlit app for Jon's eDelta assignment (payroll regulatory change analysis). An AI agent
+eDelta Maya is a local Streamlit app for payroll regulatory change analysis. An AI agent
 watches policy sources, finds what changed, works out who is affected and what it costs, approves clear
 changes by rule, sends anything unclear to a reviewer, and shows every step live.
-Team: Pavan and Anu, split 50/50 (see `docs/plan.md`, Work split). Demo: Mon Nov 2, 2026, 4:00 PM ET.
+Team: Pavan and Anu, split 50/50.
 
 ## Read before any work
 
-1. `docs/requirements.md`: the source of truth. Jon's brief (B) wins over everything. Every change must
+1. `docs/requirements.md`: the source of truth. Section B (the core requirements) wins over everything. Every change must
    trace to a requirement ID; say which one in the pull request.
-2. `docs/plan.md`: how each requirement is met (data, rules, screens, tests, timeline).
+2. `docs/reading-and-comparing.md`: the definitions the AI prompts use, word for word.
 3. `docs/design.md`: before touching any UI.
 4. `docs/expected.md`: the hand-written expected answers for the team's own data.
 
@@ -141,4 +141,4 @@ docs/                      requirements, plan, design, expected, decisions/, wor
 - After each finished piece: update `CHANGELOG.md` (under Unreleased) and add a dated line to
   `docs/worklog.md` (who, what, requirement IDs).
 - Keep functions small and typed; docstrings say what and why in plain words.
-- Explain non-obvious code in a short comment. Both people must be able to explain every module to Jon.
+- Explain non-obvious code in a short comment. Both people must be able to explain every module.

@@ -1,6 +1,6 @@
 # Employee dataset: notes (80 employees)
 
-Synthetic and fictional. File: `employees.csv`. The brief's five columns come first; the rest are extra payroll fields. Matching always uses `jurisdiction`, the place where the work is performed.
+Synthetic and fictional. File: `employees.csv`. The five core columns come first; the rest are extra payroll fields. Matching always uses `jurisdiction`, the place where the work is performed.
 
 ## Minimum wages used (from the policy bulletins)
 

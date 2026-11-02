@@ -1,6 +1,6 @@
 # eDelta Maya
 
-Maya is our submission for the eDelta Consulting assignment, "Payroll Regulatory Change Analysis and Impact Assessment". It takes two versions of a payroll policy, works out what changed, checks which employees are affected, estimates what the change costs, and gives a reviewer the final say. The app shows up as "eDelta Maya" on screen, and the repository is called Maya.
+Maya is a payroll regulatory change analysis and impact assessment tool. It takes two versions of a payroll policy, works out what changed, checks which employees are affected, estimates what the change costs, and gives a reviewer the final say. The app shows up as "eDelta Maya" on screen, and the repository is called Maya.
 
 The idea we kept coming back to is a simple division of labour. The AI does the reading, the code does the checking and the arithmetic, and a person makes every decision.
 
@@ -93,7 +93,7 @@ We use two small Groq models. gpt-oss-120b reads and compares sections. gpt-oss-
 
 ## Who did what
 
-We split the work by layer, following the plan in `docs/plan.md`.
+We split the work by layer.
 
 Pavan built the reading side: loading and splitting the documents, the Groq client, the prompts and answer formats, the pipeline that produces findings, the agent with its live view, the policy website and reset script, and the Agent activity, Sources and Proposed law pages.
 

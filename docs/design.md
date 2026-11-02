@@ -6,7 +6,7 @@ Visual reference: the eDelta canvas (claude.ai artifact, pages Agent, Review que
 Review history, Export, Sources). Take screenshots of it and drop them into Claude Code when building
 each page. This file is the part Claude Code must follow exactly.
 
-## Why it looks like this (be ready to say this to Jon)
+## Why it looks like this
 
 - First impressions form in 17 to 50 ms, and simple, familiar layouts score highest (Google research).
 - About 80% of eye fixations land on the left half of a screen (Nielsen Norman Group), so navigation and
@@ -92,8 +92,8 @@ a file is missing, the app falls back to the text "eDelta" with "Delta" in the a
 
 ## Decision record: dark navy theme and eDelta logo (A6)
 
-- **Context:** The brief (P2) chose Terracotta & Paper and a "maya." wordmark. In Aditya's review, the eDelta
-  look was requested for the whole app, and the supplied logo has white lettering that cannot sit on a light page.
+- **Context:** The first design (P2) chose Terracotta & Paper and a "maya." wordmark. The eDelta
+  look was later chosen for the whole app, and the supplied logo has white lettering that cannot sit on a light page.
 - **Decision (Nov 1, 2026):** The whole app uses a dark navy theme and the eDelta logo. A6 supersedes the palette and
   wordmark parts of P2; fonts, layout and copy rules stay. The SOC item (A7) was dropped and is not built.
 - **Alternatives:** A navy sidebar and header only (a split look and two palettes to keep readable); keeping the light
@@ -113,19 +113,19 @@ a file is missing, the app falls back to the text "eDelta" with "Delta" in the a
 
 ## Decision record: real place names on synthetic data (Nov 1, 2026)
 
-- **Context:** The three jurisdictions were fictional (Avalon, Calder, Meridian). The demo reads better with real places.
-- **Decision:** Real place names on synthetic data; Jon's brief requires fictional policy and a synthetic dataset.
+- **Context:** The three jurisdictions were fictional (Avalon, Calder, Meridian). Real places are easier to recognise.
+- **Decision:** Real place names on synthetic data; The project requires fictional policy and a synthetic dataset.
   Avalon is now New York City, Calder is Los Angeles and Meridian is Chicago. Names only changed: every wage rate, rule, date and
   employee is still synthetic and illustrative. Every bulletin header, the policy site, the Sources page and the footer say so:
   "Synthetic bulletin. Place names are real; wage rates, rules and dates are illustrative, not the actual law."
-- **Alternatives:** Keeping the fictional names (rejected: less recognisable in the demo); real rates and rules (rejected: the brief
+- **Alternatives:** Keeping the fictional names (rejected: less recognisable); real rates and rules (rejected: the project
   requires a synthetic dataset and invented policy).
 - **Consequences:** Every policy file, the employee CSV, the saved replays and the tests were rewritten with one name mapping,
   and every sha256 fingerprint and replay prompt hash was recomputed. No calculation and no frozen number changed.
 
 ## Decision record: real proposed bills, informational only (A9)
 
-- **Context:** The Proposed law page showed one illustrative bill. Jon's brief wants real policy to be read, but never applied as if it were law.
+- **Context:** The Proposed law page showed one illustrative bill. The project reads real policy, but never applies it as if it were law.
 - **Decision:** The page has a selector, "Real proposed bills" and "Illustrative bill". A real bill is kept in
   `data/policies/proposed/real/<bill>/` as the official file saved unaltered, a text file extracted from it with no edits, a
   `header.json` (number, title, sponsor, official URL, date retrieved, status at retrieval, trust "informational only") and a

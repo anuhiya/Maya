@@ -1,6 +1,6 @@
 """Prompt text for planning, reading and comparing (B1, B9)."""
 
-# Definitions from docs/plan.md "Reading and comparing", word for word.
+# Definitions from docs/reading-and-comparing.md, word for word.
 CATEGORY_DEFINITIONS = (
     "wages = a required hourly pay amount in dollars, such as a minimum wage; tax rate = a percentage "
     "withheld or contributed; filing deadline = when a report or return must be filed; reporting = what must "
