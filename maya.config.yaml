@@ -3,9 +3,9 @@
 as_of_date: "2026-11-02"
 
 jurisdictions:
-  - Avalon
-  - Calder
-  - Meridian
+  - New York City
+  - Los Angeles
+  - Chicago
 
 policies:
   main_pair:
@@ -21,6 +21,10 @@ policies:
     pdf: data/company_policies/company_pay_policy.pdf
 
 employees: data/employees.csv
+
+# Proposed bills are a document stage (never a review status). Each shows what it would do if enacted.
+proposed:
+  dir: data/policies/proposed
 
 sources:
   - name: Policy site
@@ -45,7 +49,8 @@ sources:
   - name: Federal Register
     kind: federal_register
     url: https://www.federalregister.gov/api/v1
-    search_terms: [minimum wage, payroll]
+    # The search is limited to these terms and anything whose title does not contain one is dropped.
+    search_terms: [wage, minimum wage, payroll, overtime, wage and hour, withholding, unemployment insurance]
     trusted: false
 
 # The fictional site the agent watches. Held-back versions are published in this order (file stems).
@@ -53,8 +58,72 @@ site:
   dir: data/policy_site
   unpublished_dir: data/policy_site/_unpublished
   index_file: data/policy_site/index.json
+  # The agent reads the site over HTTP from this local server (localhost only). It saves what it downloads in
+  # fetch_dir, which Start over clears. Set enabled to false to read the folder directly.
+  server:
+    enabled: true
+    host: 127.0.0.1
+    port: 8770
+    fetch_dir: data/policy_site/_fetched
   release_order:
     - gov_rules_v3
+  # "Publish your own change" (B8). A custom version is named <family stem>_<marker>_vN and Start over removes
+  # every one. Each type finds the first section of the chosen jurisdiction whose title has a keyword and whose
+  # rule sentence has the figure (the regex group) to replace. Nothing here names a section number.
+  custom_marker: custom
+  custom_changes:
+    minimum_wage:
+      label: Minimum wage
+      title_keywords: [Minimum Wage]
+      value: money
+      patterns: ['\$(\d[\d,]*(?:\.\d+)?)']
+    tax_rate:
+      label: Tax rate
+      title_keywords: [Rate]
+      value: percent
+      patterns: ['(\d+(?:\.\d+)?)%']
+    filing_deadline:
+      label: Filing deadline
+      title_keywords: [Filing]
+      value: days
+      patterns: ['(\d+) calendar days']
+    reporting_requirement:
+      label: Reporting requirement
+      title_keywords: [Report]
+      exclude_keywords: [Filing]
+      value: text
+      patterns: ['report to the Department, (.+?) each calendar year', 'within (\d+) calendar days']
+    wording_only:
+      label: Wording only
+      value: sentence
+      swaps:
+        - ["Every employer shall", "Each employer must"]
+  # One-click demo changes. The date is days after the as-of date; leave date_offset_days out to omit the date.
+  presets:
+    - label: Wage increase, some employees affected
+      jurisdiction: New York City
+      change_type: minimum_wage
+      value: "18.00"
+      date_offset_days: 0
+    - label: Future-dated wage change
+      jurisdiction: Los Angeles
+      change_type: minimum_wage
+      value: "16.50"
+      date_offset_days: 60
+    - label: Missing effective date
+      jurisdiction: Chicago
+      change_type: minimum_wage
+      value: "14.25"
+    - label: Wording-only change
+      jurisdiction: Chicago
+      change_type: wording_only
+      value: ""
+      date_offset_days: 0
+    - label: Filing deadline change
+      jurisdiction: Los Angeles
+      change_type: filing_deadline
+      value: "15"
+      date_offset_days: 30
 
 # Saved state that reset() clears. The database holds the reviews, agent runs and the fingerprints of
 # every document seen. It is gitignored.
@@ -64,6 +133,8 @@ state:
 # The agent stops after this many steps, refused ones included.
 agent:
   max_steps: 25
+  # Steps code may choose per run when the planner model keeps failing (the log says "Planner fallback").
+  max_planner_fallbacks: 6
 
 # Page display: log times are stored in UTC and shown in this zone; a replayed run pauses between log lines.
 ui:

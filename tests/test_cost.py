@@ -48,7 +48,7 @@ def test_no_gap_is_an_error():
 
 def _row(result, amount, timing):
     return ImpactRow(
-        finding_id="f", employee_id="E", jurisdiction="Avalon",
+        finding_id="f", employee_id="E", jurisdiction="New York City",
         employment_type=EmploymentType.HOURLY_FULL_TIME, hourly_wage=D("1"),
         weekly_hours=D("1"), rule_id="R1", result=result, reason="r",
         weekly_increase=amount, timing=timing)

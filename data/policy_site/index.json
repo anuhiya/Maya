@@ -6,7 +6,7 @@
       "version": 1,
       "issued": "July 1, 2026",
       "file": "gov_rules_v1.txt",
-      "sha256": "071b1cd262c9ae954719c2c801b8dbeb25f52db971ca2c75b1e54cd70e54eeec",
+      "sha256": "d9fa6fc62e2045c4225a495937934a60a0e26cf4c9d9fe41e72c8cee810f9bf6",
       "policy_family": "regional-dol-payroll-bulletin"
     },
     {
@@ -15,7 +15,7 @@
       "version": 2,
       "issued": "October 15, 2026",
       "file": "gov_rules_v2.txt",
-      "sha256": "7b545c11ef578e0e97090ef67f273eb2613b3b55b92b20ca60f7cc198a89063e",
+      "sha256": "3eab33a217064dc18b2a0f9e3947eb8253ffbbb2fdbe07ebaaf543ead72e15ec",
       "policy_family": "regional-dol-payroll-bulletin"
     }
   ]

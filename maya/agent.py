@@ -6,7 +6,7 @@ approved by the routing rule's sign-off or a person.
 """
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from typing import Callable, Protocol
@@ -23,6 +23,7 @@ from maya.models import AgentLogLine, ChangeType, Finding, ImpactResult, ImpactR
 from maya.pipeline import compare_documents
 from maya.split import read_sections as split_document
 
+MAX_PLANNER_FALLBACKS = 2  # steps code may choose per run when the planner model fails
 GOAL = "Find what changed since the approved version, who it affects, what it costs, and who must decide."
 NEW, FETCHED, SPLIT, READ, CHECKED, MATCHED, PRICED, ROUTED, FAILED = range(9)
 
@@ -84,6 +85,9 @@ class ChangeState:
     stage: int = NEW
     result: CompareResult | None = None
     error: str = ""
+    n_old: int = 0
+    n_new: int = 0
+    titles: dict = field(default_factory=dict)  # section number -> title, for the live view
 
     @property
     def label(self) -> str:
@@ -110,12 +114,16 @@ def _money(value: Decimal) -> str:
 
 class Agent:
     def __init__(self, cfg: dict, planner: Planner, llm: LLM, conn, on_line: Callable | None = None,
-                 federal_register_get: Callable | None = None, saved_run: str | None = None):
+                 federal_register_get: Callable | None = None, saved_run: str | None = None,
+                 on_step: Callable | None = None, on_step_start: Callable | None = None):
         self.cfg, self.planner, self.llm, self.conn, self.on_line = cfg, planner, llm, conn, on_line
+        self.on_step, self.on_step_start = on_step, on_step_start  # the live view (A5): called around every step
         self.fr_get = federal_register_get or sources._get
         llm.on_wait = self._rate_limit_wait
+        llm.on_plan_retry = self._plan_retry
         self.saved_run = saved_run  # a saved run whose Federal Register result may stand in for the search
         self.max_steps = cfg.get("agent", {}).get("max_steps", 25)
+        self.max_fallbacks = cfg.get("agent", {}).get("max_planner_fallbacks", MAX_PLANNER_FALLBACKS)
         self.replayed = llm.provider == "replay"
         self.log: list[AgentLogLine] = []
         self.watch: sources.WatchResult | None = None
@@ -136,7 +144,11 @@ class Agent:
             self.on_line(line)
 
     def _rate_limit_wait(self, seconds: float) -> None:
-        self.emit(LogTag.RESULT, f"Waiting {seconds:g} seconds for the model rate limit, then retrying.")
+        self.emit(LogTag.RESULT, f"Waiting for the model (rate limit): {seconds:g} seconds, then retrying.")
+
+    def _plan_retry(self, number: int, problem: str) -> None:
+        self.emit(LogTag.CHECK, f"Planner retry {number} of 2: the model gave no valid tool call. "
+                                f"Asking again with a correction. ({problem[:140]})")
 
     def check(self, passed: bool, text: str) -> None:
         self.emit(LogTag.CHECK, ("Passed: " if passed else "Failed: ") + text)
@@ -144,16 +156,26 @@ class Agent:
     def run(self) -> RunResult:
         started = db.utcnow()
         messages = [{"role": "system", "content": prompts.PLANNER_SYSTEM}, {"role": "user", "content": GOAL}]
-        specs, seen_calls, steps = tool_specs(), set(), 0
+        specs, seen_calls, steps, fallbacks = tool_specs(), set(), 0, 0
         while steps < self.max_steps and not self.finished:
             steps += 1
             try:
                 name, args = self.planner.next(messages, specs)
             except (LLMError, ReplayError) as err:
-                self.check(False, f"The planner gave no usable step: {err}")
-                break
+                step = self._fallback_step() if isinstance(err, LLMError) and fallbacks < self.max_fallbacks else None
+                if step is None:
+                    self.check(False, f"The planner gave no usable step: {err}")
+                    break
+                fallbacks += 1
+                name, args = step
+                self.emit(LogTag.CHECK, f"Planner fallback {fallbacks} of {self.max_fallbacks}: the model gave no "
+                                        f"usable step, so code chose {name} from the fixed order. ({str(err)[:140]})")
             call_id = f"call_{steps}"
+            if self.on_step_start:
+                self.on_step_start(steps, name, args)
             result = self._step(name, args, seen_calls)
+            if self.on_step:
+                self.on_step(self.snapshot(steps, name, args, result))
             messages += [
                 {"role": "assistant", "content": None, "tool_calls": [{
                     "id": call_id, "type": "function",
@@ -190,19 +212,32 @@ class Agent:
             self.check(False, f"{name} failed: {err}")
             return f"FAILED: {err}"
 
-    def _next_hint(self) -> str:
-        """What the code expects next, so a refused planner can recover."""
+    def _next_step(self) -> tuple[str, str | None]:
+        """The tool the fixed order expects next, with the change it is for when it takes one."""
         if self.watch is None:
-            return "Next step: watch_sources."
+            return "watch_sources", None
         for stage, tool in ((NEW, "fetch_document"), (FETCHED, "split_sections"), (SPLIT, "read_sections")):
             waiting = [c.id for c in self.changes.values() if c.stage == stage]
             if waiting:
-                return f"Next step: {tool} for {waiting[0]}."
+                return tool, waiting[0]
         for stage, tool in ((READ, "check_answers"), (CHECKED, "match_employees"), (MATCHED, "price_changes"),
                             (PRICED, "route_findings")):
             if any(c.stage == stage for c in self.changes.values()):
-                return f"Next step: {tool}."
-        return "Next step: finish." if self.searched else "Next step: search_federal_register."
+                return tool, None
+        return ("finish" if self.searched else "search_federal_register"), None
+
+    def _next_hint(self) -> str:
+        """What the code expects next, so a refused planner can recover."""
+        tool, change = self._next_step()
+        return f"Next step: {tool} for {change}." if change else f"Next step: {tool}."
+
+    def _fallback_step(self) -> tuple[str, dict]:
+        """The planner failed: code picks the next step from the fixed order. The PLAN line says so."""
+        tool, change = self._next_step()
+        args = {"plan": "Chosen by code, not the model (planner fallback): the next step in the fixed order."}
+        if change:
+            args["change"] = change
+        return tool, args
 
     def _validate(self, name: str, args) -> None:
         if name not in TOOLS:
@@ -240,6 +275,8 @@ class Agent:
         if self.watch is not None:
             raise Refused("sources were already watched in this run")
         self.watch = sources.watch_sources(self.cfg, self.conn)
+        for problem in self.watch.errors:
+            self.check(False, problem)
         for n, change in enumerate(self.watch.changes, 1):
             self.changes[f"c{n}"] = ChangeState(f"c{n}", change)
         lines = [f"{c.id}: {c.label} ({c.change.source}, {'trusted' if c.change.trusted else 'not trusted'})"
@@ -260,6 +297,7 @@ class Agent:
     def _split_sections(self, args: dict) -> str:
         state = self._change(args, FETCHED)
         old, new = (split_document(d.path) for d in (state.change.old, state.change.new))
+        state.n_old, state.n_new = len(old), len(new)
         state.stage = SPLIT
         self.emit(LogTag.RESULT, f"{state.label}: {len(old)} sections and {len(new)} sections.")
         return f"{state.id} split: {len(old)} old sections, {len(new)} new sections."
@@ -278,6 +316,11 @@ class Agent:
                 models = ", ".join(sorted({r["model"] for r in made}))
                 self.emit(LogTag.AI, f"{len(made)} answers read and compared by {models}.")
         state.result, state.stage = result, READ
+        try:
+            for d in (state.change.old, state.change.new):  # the new title wins
+                state.titles.update({sec.number: sec.title for sec in split_document(d.path)})
+        except (ReadingError, OSError):
+            pass
         self.findings += result.findings
         for finding in result.findings:
             self.trusted[finding.finding_id] = result.trusted
@@ -361,9 +404,14 @@ class Agent:
                 self.llm.federal_register = [{"title": i.title, "date": i.date, "url": i.url}
                                              for i in self.informational]
         text = (f"{len(self.informational)} Federal Register item(s), informational only. "
-                "They are not matched to employees or priced.")
-        self.emit(LogTag.RESULT, text + note)
-        for item in self.informational:
+                "They are not matched to employees or priced.")  # a saved run keeps its original text for the planner
+        shown = sources.relevant_items(self.cfg, self.informational)
+        if shown:
+            self.emit(LogTag.RESULT, f"{len(shown)} relevant Federal Register item(s), informational only. "
+                                     "They are not matched to employees or priced." + note)
+        else:
+            self.emit(LogTag.RESULT, "No relevant items found." + note)
+        for item in shown:
             self.emit(LogTag.RESULT, f"Informational: {item.title} ({item.date}) {item.url}")
         return text
 
@@ -393,6 +441,56 @@ class Agent:
         self.summary, self.finished = text, True
         self.emit(LogTag.RESULT, text)
         return "Run finished."
+
+    # live view (A5) ----------------------------------------------------------------------------
+
+    def snapshot(self, n: int, name: str, args, result: str) -> dict:
+        """Everything the live view shows after one step, as plain data (strings, numbers, lists)."""
+        args = args if isinstance(args, dict) else {}
+        lane_of = {}
+        for f in self.findings:
+            route = self.routes.get(f.finding_id)
+            if route is None:
+                continue
+            lane_of[f.finding_id] = ("wording" if f.change_type is ChangeType.WORDING_ONLY
+                                     else "ready" if route.ready else "decision",
+                                     "; ".join(route.reasons) if route.reasons else "; ".join(route.passed_conditions))
+        findings = []
+        titles = {f.finding_id: c.titles.get(f.section, "") for c in self.changes.values() if c.result
+                  for f in c.result.findings}  # each finding takes its title from its own document pair
+        for f in self.findings:
+            rows = [r for r in self.rows if r.finding_id == f.finding_id]
+            affected = [r for r in rows if r.result is ImpactResult.AFFECTED and r.weekly_increase is not None]
+            lane, why = lane_of.get(f.finding_id, (None, ""))
+            findings.append({
+                "id": f.finding_id, "section": f.section, "title": titles.get(f.finding_id, ""), "jurisdiction": f.jurisdiction,
+                "category": f.category.value, "change_type": f.change_type.value, "unit": f.unit,
+                "old_value": None if f.old_value is None else str(f.old_value),
+                "new_value": None if f.new_value is None else str(f.new_value),
+                "effective_date": f.effective_date, "timing": f.timing.value, "old_rule": f.old_rule,
+                "new_rule": f.new_rule, "old_excerpt": f.old_excerpt, "new_excerpt": f.new_excerpt,
+                "source_file": f.source_file, "ai_reason": f.ai_reason, "flags": [x.reason for x in f.flags],
+                "checks": [{"check": c.check, "passed": c.passed, "detail": c.detail} for c in f.check_results],
+                "matched": len(rows), "affected": len(affected),
+                "weekly": f"{sum((r.weekly_increase for r in affected), Decimal('0.00')):.2f}",
+                "calc": f"{affected[0].employee_id}: {affected[0].calculation}" if affected else "",
+                "lane": lane, "why": why,
+            })
+        in_effect, coming = self._totals()
+        return {
+            "n": n, "tool": name, "change": args.get("change"), "plan": str(args.get("plan", "")),
+            "by_code": str(args.get("plan", "")).startswith("Chosen by code"), "result": result[:400],
+            "failed": result.startswith("FAILED"), "refused": result.startswith("REFUSED"),
+            "changes": [{"id": c.id, "label": c.label, "stage": c.stage, "n_old": c.n_old, "n_new": c.n_new,
+                         "total": c.result.total if c.result else 0,
+                         "identical": c.result.identical if c.result else 0, "error": c.error}
+                        for c in self.changes.values()],
+            "findings": findings, "in_effect": f"{in_effect:.2f}", "coming": f"{coming:.2f}",
+            "ai_answers": sum(r["kind"] in ("read_section", "compare_section") for r in self.llm.records),
+            "prices": sum(r.result is ImpactResult.AFFECTED and r.weekly_increase is not None for r in self.rows),
+            "lanes": {k: sum(1 for f in findings if f["lane"] == k) for k in ("decision", "ready", "wording")},
+            "finished": self.finished,
+        }
 
     # checks and numbers ------------------------------------------------------------------------
 
@@ -445,6 +543,12 @@ class Agent:
 def publish_next_version(cfg: dict) -> list[str]:
     """The live-change demo action: publish the held-back policy version on the fictional site."""
     return site.publish_next(cfg)
+
+
+def publish_custom_version(cfg: dict, jurisdiction: str, change_type: str, value: str = "",
+                           effective_date=None) -> site.Published:
+    """Publish the presenter's own change as the next version; the rehearsed held-back one stays held back."""
+    return site.publish_custom(cfg, jurisdiction, change_type, value, effective_date)
 
 
 def start_over(cfg: dict) -> None:

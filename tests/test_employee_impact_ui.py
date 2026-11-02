@@ -51,13 +51,13 @@ def test_as_of_is_shared(cfg):
 
 
 def test_filters_are_shared(cfg):
-    shown = text(run(cfg, f_jurisdiction="Calder"))
-    assert "Jurisdiction: Calder" in shown
+    shown = text(run(cfg, f_jurisdiction="Los Angeles"))
+    assert "Jurisdiction: Los Angeles" in shown
     assert "$142.80" in shown and "$273.19" not in shown
 
 
 def test_filter_with_no_match(cfg):
-    at = run(cfg, f_jurisdiction="Meridian", f_category="Tax rate")
+    at = run(cfg, f_jurisdiction="Chicago", f_category="Tax rate")
     assert any("No findings match these filters" in i.value for i in at.info)
 
 
@@ -78,8 +78,8 @@ def test_affected_first_largest_increase_first_and_no_wrap(cfg):
 
 def test_hybrid_review_rows_shown_without_changing_totals(cfg):
     shown = text(run(cfg))
-    assert "Needs review: works part of the week in Avalon" in shown
-    assert "Needs review: works part of the week in Calder" in shown
+    assert "Needs review: works part of the week in New York City" in shown
+    assert "Needs review: works part of the week in Los Angeles" in shown
     assert "1.45 x 40 h = $58.00" in shown and "0.30 x 24 h = $7.20" in shown
     assert "$273.19" in shown and "$142.80" in shown
 
@@ -89,4 +89,16 @@ def test_total_cost_panel(cfg):
     for expected in ("Total cost", "$273.19", "$20.90", "$294.09", "$14,205.88", "$1,086.75", "$7,425.60",
                      "Flagged", "Needs reviewer input", "Unemployment tax change", "Back pay"):
         assert expected in shown
-    assert "—" not in shown
+    assert chr(0x2014) not in shown
+
+
+def test_track_cards_name_what_to_watch_and_invent_no_results():
+    from maya.ui import employee_impact
+    html = employee_impact.track_cards()
+    assert all(w in html for w in ("Risk", "Efficiency", "Cost")) and "$" not in html
+
+
+def test_assumption_wording_and_calculation_column_class():
+    from maya.ui import employee_impact
+    assert "No other local or state minimums are modelled. Only the gap to the minimum in the bulletin is costed." in employee_impact.ASSUMPTIONS
+    assert not any("city or county" in a for a in employee_impact.ASSUMPTIONS)

@@ -21,7 +21,7 @@ def facts_for(section, **over):
     return ExtractedFacts(**base)
 
 
-def sec(text, jurisdiction="Avalon", date="January 1, 2027"):
+def sec(text, jurisdiction="New York City", date="January 1, 2027"):
     return Section(number="9.9", title="T", jurisdiction=jurisdiction, effective_date=date,
                    text=f"Jurisdiction: {jurisdiction}\nEffective Date: {date}\n{text}")
 
@@ -116,9 +116,9 @@ def test_v3_substantive_does_not_need_equal_numbers():
 
 
 def test_v3_jurisdiction_must_match_section():
-    f = facts_for(V2["1.1"], jurisdiction="Calder")
+    f = facts_for(V2["1.1"], jurisdiction="Los Angeles")
     r = check_v3(V1["1.1"], V2["1.1"], ChangeType.SUBSTANTIVE, f, V2["1.1"])
-    assert not r.passed and "Avalon" in r.detail
+    assert not r.passed and "New York City" in r.detail
 
 
 def test_v3_category_must_be_a_label():

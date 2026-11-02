@@ -42,7 +42,7 @@ def test_v2_txt_and_pdf_identical():
 def test_missing_effective_date_is_none():
     s = by_number(read_sections(V2.with_suffix(".txt")))["2.3"]
     assert s.effective_date is None
-    assert s.jurisdiction == "Calder"
+    assert s.jurisdiction == "Los Angeles"
 
 
 def test_date_kept_as_written():
@@ -50,7 +50,7 @@ def test_date_kept_as_written():
     assert s["3.3"].effective_date == "To be determined"
     assert s["1.1"].effective_date == "November 1, 2026"
     assert s["1.1"].title == "Minimum Wage"
-    assert s["1.1"].jurisdiction == "Avalon"
+    assert s["1.1"].jurisdiction == "New York City"
 
 
 def test_front_matter_skipped():

@@ -11,6 +11,7 @@ from pathlib import Path
 import streamlit as st
 
 from maya import cost, db, routing
+from maya import export as csvs
 from maya.ai.llm import LLM, LLMError, MissingSettingError
 from maya.ai.replay import ReplayError
 from maya.employees import load_employees
@@ -267,16 +268,47 @@ def diff_html(old: str | None, new: str | None) -> tuple[str, str]:
 
 # ---- page parts -----------------------------------------------------------------------------
 
+LANES = ("Ready to approve", "Needs decision", "Wording only or no action")
+FIX_IN = {Category.WAGES: "Payroll pay rates", Category.TAX_RATE: "Tax settings",
+          Category.FILING_DEADLINE: "Compliance calendar", Category.REPORTING: "Reporting process",
+          Category.UNCLEAR: "To be decided"}
+OWNER = {Category.WAGES: "Payroll Manager", Category.TAX_RATE: "Payroll Manager",
+         Category.FILING_DEADLINE: "Compliance lead", Category.REPORTING: "Compliance lead",
+         Category.UNCLEAR: "Reviewer"}
+ACTION = {Category.WAGES: "Update the pay rate of each affected employee from the effective date.",
+          Category.TAX_RATE: "Update the tax rate in the payroll settings from the effective date.",
+          Category.FILING_DEADLINE: "Update the filing calendar so the report is filed by the new deadline.",
+          Category.REPORTING: "Update the reporting process for the new requirement.",
+          Category.UNCLEAR: "A reviewer reads the source and decides what to do."}
+
+
+def lane_of(i: Item) -> str:
+    if i.finding.change_type is ChangeType.WORDING_ONLY or i.status is not Status.PENDING:
+        return LANES[2]
+    return LANES[0] if i.route.ready else LANES[1]
+
+
+def weekly_of(i: Item) -> Decimal:
+    """Weekly dollars this finding adds, summed from the rows code priced."""
+    return sum((r.weekly_increase for r in i.rows
+                if r.result is ImpactResult.AFFECTED and r.weekly_increase is not None), Decimal("0.00"))
+
+
+def short_title(i: Item) -> str:
+    return f"Section {i.finding.section}  {i.title}".strip()
+
+
+# ---- page parts -----------------------------------------------------------------------------
+
 def render_cards(s: dict) -> None:
     annual, label = s["annual"]
     cards = [
         ("Changes found", str(s["found"]), "", f"{s['other']} substantive, added or removed, {s['wording']} wording only"),
         ("Need a decision", str(s["need"]), "review", "Sent to reviewer with a reason"),
         ("Ready to approve", str(s["ready"]), "", f"{s['ready']} waiting for one-click sign-off"),
-        ("Weekly increase in effect", money(s["in_effect"]), "",
-         f"{s['employees_now']} employees, {money(annual)} {label}"),
-        ("Weekly increase coming", money(s["coming"]), "",
-         f"Not in the in-effect total, {money(s['annual_coming'][0])} {s['annual_coming'][1]}"),
+        ("Weekly impact", money(s["in_effect"]), "",
+         f"In effect: {s['employees_now']} employees, {money(annual)} {label}. "
+         f"Coming: {money(s['coming'])}, not added to in effect"),
     ]
     html = "".join(f'<div class="mq-card"><div class="label">{esc(a)}</div>'
                    f'<div class="value {k}">{esc(b)}</div><div class="sub">{esc(d)}</div></div>'
@@ -293,64 +325,70 @@ def timing_chip(i: Item) -> str:
                 {Timing.CURRENT: "good", Timing.FUTURE: "future", Timing.UNKNOWN: "review"}[i.finding.timing])
 
 
-def list_meta(i: Item) -> str:
-    f = i.finding
-    label = routing.READY_LABEL if i.route.ready and i.status is Status.PENDING else STATUS_LABELS[i.status]
-    kind = "accent" if label == routing.READY_LABEL else {Status.APPROVED: "good", Status.DISMISSED: "critical"}.get(i.status, "")
-    if f.change_type is ChangeType.WORDING_ONLY:
-        note = "No action needed"
-    elif i.route.reasons and i.status is Status.PENDING:
-        note = f'<span class="why">Sent to reviewer: {esc(i.route.reasons[0].lower())}</span>'
-    else:
-        note = ""
-    line = f"{esc(f.jurisdiction)}, {esc(CATEGORY_LABELS[f.category])}, {esc(CHANGE_LABELS[f.change_type])}"
-    return f'<div class="mq-meta">{line}<br>{chip(label, kind)}{note}</div>'
-
-
 def render_list(items: list[Item], as_of: date, conn, reviewer: str,
                 mode: routing.ApprovalMode = routing.ApprovalMode.PRE_APPROVE) -> None:
+    """Review order: highest weekly dollars first, grouped by what a person has to do."""
     ready = [i for i in items if i.route.ready and i.status is Status.PENDING]
-    left, right = st.columns([1, 1.5], vertical_alignment="center")
-    left.markdown(f"**{len(items)} findings shown**")
+    # groups in the order a person works them; inside a group, highest weekly dollars first; one count down the list
+    ordered = [i for lane in LANES for i in sorted((x for x in items if lane_of(x) == lane),
+                                                    key=lambda x: (-weekly_of(x), x.finding.section))]
+    rank = {i.finding.finding_id: n for n, i in enumerate(ordered, 1)}
+    st.markdown('<div class="mq-sub" style="margin-top:0">Review order</div>', unsafe_allow_html=True)
     if mode is routing.ApprovalMode.AUTO_APPROVE:
-        right.caption("Auto-approve is on: findings that pass the rule are approved automatically.")
+        st.caption("Auto-approve is on: findings that pass the rule are approved automatically.")
         ready = []
-    elif right.button(f"Sign off {len(ready)} ready", key="signoff", disabled=not ready or not reviewer.strip()):
-        try:
-            routing.sign_off(conn, {i.finding.finding_id: i.route for i in ready}, reviewer.strip())
-        except ValueError as err:
-            st.session_state["flash"] = ("error", str(err))
-        else:
-            st.session_state["flash"] = ("success", f"Signed off {len(ready)} ready findings.")
-        st.rerun()
+    else:
+        if st.button(f"Sign off {len(ready)} ready", key="signoff", type="primary",
+                     disabled=not ready or not reviewer.strip()):
+            try:
+                routing.sign_off(conn, {i.finding.finding_id: i.route for i in ready}, reviewer.strip())
+            except ValueError as err:
+                st.session_state["flash"] = ("error", str(err))
+            else:
+                st.session_state["flash"] = ("success", f"Signed off {len(ready)} ready findings.")
+            st.rerun()
+        st.caption("Sign-off approves only findings that passed every check. Each is recorded with the checks "
+                   "it passed. Numbered from the top; inside each group, highest weekly dollars first.")
     if ready and not reviewer.strip():
-        st.caption("Enter your name above to sign off.")
-    for group in GROUPS:
-        members = [i for i in items if i.group == group]
+        st.caption("Open Review settings and enter your name to sign off.")
+    for lane in LANES:
+        members = [i for i in ordered if lane_of(i) == lane]
         if not members:
             continue
-        st.markdown(f'<div class="mq-group">{group} ({len(members)})</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="mq-group">{lane} ({len(members)})</div>', unsafe_allow_html=True)
         for i in members:
-            fid = i.finding.finding_id
+            fid, f = i.finding.finding_id, i.finding
             picked = st.session_state.get("selected_id") == fid
             with st.container(key=f"{'rowsel' if picked else 'row'}_{fid}"):
-                title, when = st.columns([3, 1.2], vertical_alignment="center")
-                title.button(md(f"Section {i.finding.section}  {i.title}"), key=f"pick_{fid}", width="stretch",
-                             type="tertiary", on_click=lambda fid=fid: st.session_state.update(selected_id=fid))
-                when.markdown(f'<div class="mq-when">{esc(days_label(i, as_of))}</div>', unsafe_allow_html=True)
-                st.markdown(list_meta(i), unsafe_allow_html=True)
+                st.button(md(f"{rank[fid]}. {short_title(i)}"), key=f"pick_{fid}", width="stretch",
+                          type="tertiary", on_click=lambda fid=fid: st.session_state.update(selected_id=fid))
+                dollars = f"{money(weekly_of(i))} a week" if weekly_of(i) else "No pay change"
+                st.markdown(f'<div class="mq-meta">{esc(f.jurisdiction)}, <b>{esc(dollars)}</b><br>'
+                            f'{timing_chip(i)}{status_chip(i.status)}</div>', unsafe_allow_html=True)
 
 
-def render_why(i: Item) -> None:
+def check_chips(i: Item, trusted: bool, jurisdictions: list[str]) -> str:
+    """One chip per check the routing rule reads, with a tick or cross and the word."""
     f = i.finding
+    names = {"V1": "V1 quotes match the source", "V2": "V2 numbers recomputed", "V3": "V3 consistent"}
+    checks = [(names.get(c.check, c.check), c.passed, c.detail) for c in f.check_results]
+    checks += [("Trusted source", trusted, ""), ("Effective date readable", parse_date(f.effective_date) is not None, ""),
+               ("Jurisdiction known", f.jurisdiction in jurisdictions, "")]
+    return "".join(chip(f"{'✓' if ok else '✗'} {name}: {'passed' if ok else 'failed'}", "good" if ok else "critical")
+                   for name, ok, _ in checks)
+
+
+def render_why(i: Item, comparison: Comparison, cfg: dict) -> None:
+    f = i.finding
+    st.markdown('<div class="mq-sub">Why it was routed this way</div>', unsafe_allow_html=True)
+    st.markdown(check_chips(i, comparison.result.trusted, cfg["jurisdictions"]), unsafe_allow_html=True)
     if f.change_type is ChangeType.WORDING_ONLY:
         body = "Wording only: no value, date, unit or scope changed, so nobody is affected and nothing costs money."
     elif i.route.ready:
         body = f"{routing.READY_LABEL}: " + "; ".join(i.route.passed_conditions) + "."
     else:
         body = "A person must decide: " + "; ".join(r.lower() for r in i.route.reasons) + "."
-    st.markdown(f'<div class="mq-box"><div class="label">Why it was routed this way</div>{esc(body)}</div>',
-                unsafe_allow_html=True)
+    st.caption(md(body))
     failed = [c for c in f.check_results if not c.passed]
     if f.flags or failed:
         lines = [fl.reason for fl in f.flags] + [f"Check {c.check} failed: {c.detail}" for c in failed]
@@ -358,16 +396,86 @@ def render_why(i: Item) -> None:
                     + "<br>".join(esc(x) for x in lines) + "</div>", unsafe_allow_html=True)
 
 
-def render_excerpts(i: Item, old_name: str) -> None:
+def render_rules(i: Item) -> None:
+    f = i.finding
+    old_h, new_h = diff_html(f.old_excerpt, f.new_excerpt)
+    left, right = st.columns(2)
+    left.markdown(f'<div class="mq-exc old"><div class="src">Previous rule. Removed words are struck through.'
+                  f'</div>{old_h or "No previous rule: this section is new."}</div>', unsafe_allow_html=True)
+    right.markdown(f'<div class="mq-exc new"><div class="src">Updated rule. Added words are highlighted.'
+                   f'</div>{new_h or "No updated rule: this section was removed."}</div>', unsafe_allow_html=True)
+
+
+def render_key_facts(i: Item) -> None:
+    f = i.finding
+    n_affected = sum(r.result is ImpactResult.AFFECTED for r in i.rows)
+    pairs = [("Jurisdiction", f.jurisdiction), ("Section", f"{f.section} {i.title}".strip()),
+             ("Category", CATEGORY_LABELS[f.category]),
+             ("Value", f"{fmt_value(f.old_value, f.unit)} to {fmt_value(f.new_value, f.unit)}"
+              if f.old_value is not None or f.new_value is not None else "No value"),
+             ("Effective date", f"{old_date(f)} to {f.effective_date or 'not found'}"),
+             ("Employees affected", str(n_affected))]
+    cells = "".join(f'<div class="k">{esc(k)}</div><div class="v">{esc(v)}</div>' for k, v in pairs)
+    st.markdown(f'<div class="mq-kv">{cells}</div>', unsafe_allow_html=True)
+
+
+def render_money(i: Item) -> None:
+    st.markdown('<div class="mq-sub">Financial impact</div>', unsafe_allow_html=True)
+    affected = [r for r in i.rows if r.result is ImpactResult.AFFECTED and r.weekly_increase is not None]
+    if not affected:
+        text = ("No pay change: nobody is affected." if i.rows or i.finding.change_type is ChangeType.WORDING_ONLY
+                else f"No current {i.finding.jurisdiction} employees are matched by this change.")
+        st.markdown(f'<div class="mq-bignum">No pay change</div><div class="mq-meta">{esc(text)}</div>',
+                    unsafe_allow_html=True)
+        return
+    total = weekly_of(i)
+    annual, label = cost.annualized(total)
+    first = min(affected, key=lambda r: r.employee_id)
+    st.markdown(f'<div class="mq-bignum">{esc(money(total))} <span>a week, {esc(TIMING_LABELS[i.finding.timing].lower())}'
+                f'</span></div><div class="mq-meta">{esc(money(annual))} {esc(label)}. {len(affected)} employees affected.'
+                f'<br>Example, {esc(first.employee_id)}: <span class="mono">{esc(first.calculation)}</span></div>',
+                unsafe_allow_html=True)
+
+
+def render_action(i: Item) -> None:
+    f = i.finding
+    st.markdown('<div class="mq-sub">Recommended action</div>', unsafe_allow_html=True)
+    st.markdown(esc(f.recommended_action or ACTION[f.category]))
+    st.markdown(chip(f"Owner: {f.owner or OWNER[f.category]}") + chip(f"Fix in: {FIX_IN[f.category]}"),
+                unsafe_allow_html=True)
+
+
+def render_by_hand(i: Item) -> None:
+    affected = [r for r in i.rows if r.result is ImpactResult.AFFECTED and r.weekly_increase is not None]
+    with st.expander("Check by hand"):
+        if affected:
+            r = min(affected, key=lambda r: r.employee_id)
+            st.markdown("Weekly increase = gap x regular hours + gap x 1.5 x overtime hours, where gap is the new "
+                        "minimum minus the wage and regular hours stop at 40.")
+            st.markdown(f"Real numbers, {r.employee_id}: wage ${r.hourly_wage:.2f}, new minimum "
+                        f"${r.new_minimum:.2f}, {r.weekly_hours.normalize():f} hours a week.")
+            st.code(r.calculation, language=None)
+            st.caption(md(f"All {len(affected)} affected employees add up to {money(weekly_of(i))} a week. "
+                          f"Annualized: weekly x 52."))
+        else:
+            st.caption("This change has no pay calculation to check.")
+        fid = i.finding.finding_id
+        done = fid in st.session_state.setdefault("hand_checked", set())
+        if st.checkbox("I checked this by hand", value=done, key=f"hand_{fid}"):
+            st.session_state["hand_checked"].add(fid)
+        else:
+            st.session_state["hand_checked"].discard(fid)
+
+
+def render_evidence(i: Item, comparison: Comparison) -> None:
     f = i.finding
     st.markdown('<div class="mq-sub">Evidence from the source</div>', unsafe_allow_html=True)
     old_h, new_h = diff_html(f.old_excerpt, f.new_excerpt)
-    if f.old_excerpt:
-        st.markdown(f'<div class="mq-exc old"><div class="src">Previous version: {esc(old_name)}, '
-                    f'Section {esc(f.section)}</div>{old_h}</div>', unsafe_allow_html=True)
-    if f.new_excerpt:
-        st.markdown(f'<div class="mq-exc new"><div class="src">Updated version: {esc(f.source_file)}, '
-                    f'Section {esc(f.section)}</div>{new_h}</div>', unsafe_allow_html=True)
+    prev, upd = st.tabs(["Previous", "Updated"])
+    prev.markdown(f'<div class="mq-exc old"><div class="src">Previous version: {esc(comparison.old_name)}, '
+                  f'Section {esc(f.section)}</div>{old_h or "none"}</div>', unsafe_allow_html=True)
+    upd.markdown(f'<div class="mq-exc new"><div class="src">Updated version: {esc(f.source_file)}, '
+                 f'Section {esc(f.section)}</div>{new_h or "none"}</div>', unsafe_allow_html=True)
 
 
 def render_facts(i: Item) -> None:
@@ -380,13 +488,13 @@ def render_facts(i: Item) -> None:
             ("Rule", f.old_rule or "none", f.new_rule or "none")]
     body = "".join(f'<tr><td>{esc(a)}</td><td class="mono">{esc(b)}</td><td class="mono"><b>{esc(c)}</b></td></tr>'
                    for a, b, c in rows)
-    st.markdown('<div class="mq-sub">Extracted facts</div><table class="mq-table"><tr><th>Field</th>'
-                f'<th>Previous rule</th><th>Updated rule</th></tr>{body}</table>', unsafe_allow_html=True)
+    with st.expander("Extracted facts"):
+        st.markdown('<table class="mq-table kv"><tr><th>Field</th>'
+                    f'<th>Previous rule</th><th>Updated rule</th></tr>{body}</table>', unsafe_allow_html=True)
 
 
 def render_impact(i: Item) -> None:
     rows = i.rows
-    st.markdown('<div class="mq-sub">Who is affected</div>', unsafe_allow_html=True)
     if not rows:
         st.caption(f"No current {i.finding.jurisdiction} employees are matched by this change.")
         return
@@ -398,12 +506,6 @@ def render_impact(i: Item) -> None:
     hybrid = len(rows) - len(own)
     note = f" Also listed for review: {hybrid} hybrid {'employee' if hybrid == 1 else 'employees'} working part of the week here." if hybrid else ""
     st.caption(md(f"{len(own)} {i.finding.jurisdiction} employees checked: {parts}.{note}"))
-    affected = [r for r in rows if r.result is ImpactResult.AFFECTED]
-    if affected:
-        total = cost.sum_by_timing(rows)[i.finding.timing]
-        annual, label = cost.annualized(total)
-        st.markdown(f"**Weekly increase, {TIMING_LABELS[i.finding.timing].lower()}: {md(money(total))}** "
-                    f"({md(money(annual))} {label})")
     order = {ImpactResult.AFFECTED: 0, ImpactResult.NEEDS_REVIEW: 1}
     heads = ["Employee", "Type", "Wage", "Hours a week", "Result", "Why", "Weekly increase", "Calculation"]
     wraps = {"Why", "Calculation"}
@@ -413,33 +515,46 @@ def render_impact(i: Item) -> None:
         cells = [(r.employee_id, "mono"), (r.employment_type.value.replace("_", " "), ""),
                  (f"{r.hourly_wage:.2f}", "mono"), (f"{r.weekly_hours.normalize():f}", "mono"),
                  (RESULT_LABELS[r.result], ""), (r.reason, ""), (inc, "mono"), (r.calculation, "mono")]
-        body += "<tr>" + "".join(f'<td class="{k} {"wrap" if h in wraps else "nw"}">{esc(v)}</td>'
+        body += "<tr>" + "".join(f'<td class="{k} {"calc" if h == "Calculation" else "wrap" if h in wraps else "nw"}">{esc(v)}</td>'
                                  for (v, k), h in zip(cells, heads)) + "</tr>"
-    st.markdown('<div class="mq-scroll"><table class="mq-table"><tr>'
-                + "".join(f'<th class="{"wrap" if h in wraps else "nw"}">{h}</th>' for h in heads) + f"</tr>{body}</table></div>", unsafe_allow_html=True)
+    with st.expander("Employee by employee"):
+        st.markdown('<div class="mq-scroll"><table class="mq-table"><tr>'
+                    + "".join(f'<th class="{"calc" if h == "Calculation" else "wrap" if h in wraps else "nw"}">{h}</th>' for h in heads)
+                    + f"</tr>{body}</table></div>", unsafe_allow_html=True)
 
 
 def render_decision(i: Item, conn, reviewer: str) -> None:
+    """The reviewer decision bar, last in the card: Approve, Dismiss (comment required) and Add comment."""
     fid = i.finding.finding_id
-    st.markdown('<div class="mq-sub">Your decision</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mq-sub">Reviewer decision</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="mq-meta">Reviewing as: <b>{esc(reviewer.strip() or "not set")}</b>. Current status: '
+                f'{status_chip(i.status)}</div>', unsafe_allow_html=True)
     with st.form(f"decide_{fid}", clear_on_submit=True):
-        choice = st.radio("Decision", ["Approve", "Dismiss"], horizontal=True)
         comment = st.text_area("Comment", placeholder="Required to dismiss")
-        sent = st.form_submit_button("Record decision", type="primary")
-    if not sent:
+        named = bool(reviewer.strip())
+        a, b, c, _ = st.columns([1.1, 1.1, 1.7, 2.2])
+        approve = a.form_submit_button("Approve", type="primary", disabled=not named)
+        dismiss = b.form_submit_button("Dismiss", disabled=not named)
+        note = c.form_submit_button("Add comment", disabled=not named)
+        if not named:
+            st.caption("Enter your name in Review settings to decide")
+    if not (approve or dismiss or note):
         return
     if not reviewer.strip():
-        st.error("Enter your name above before recording a decision.")
-    elif choice == "Dismiss" and not comment.strip():
+        st.error("Enter your name in Review settings before recording a decision.")
+    elif dismiss and not comment.strip():
         st.error("A comment is required to dismiss a finding.")
+    elif note and not comment.strip():
+        st.error("Type a comment first.")
     else:
-        status = Status.APPROVED if choice == "Approve" else Status.DISMISSED
+        status = Status.APPROVED if approve else Status.DISMISSED if dismiss else i.status
         try:
             routing.decide(conn, fid, status, reviewer.strip(), comment.strip())
         except sqlite3.IntegrityError as err:
             st.error(md(f"Could not save the decision: {err}"))
             return
-        st.session_state["flash"] = ("success", f"{STATUS_LABELS[status]} section {i.finding.section}.")
+        done = "Comment added to" if note else STATUS_LABELS[status]
+        st.session_state["flash"] = ("success", f"{done} section {i.finding.section}.")
         st.rerun()
 
 
@@ -454,38 +569,55 @@ def render_history(conn, fid: str) -> None:
                     + (f"<br>{esc(d.comment)}" if d.comment else "") + "</div>", unsafe_allow_html=True)
 
 
-def render_detail(i: Item, comparison: Comparison, as_of: date, conn, reviewer: str) -> None:
+def render_detail(i: Item, comparison: Comparison, as_of: date, conn, reviewer: str, cfg: dict) -> None:
+    """One finding card, always in this order."""
     f = i.finding
-    st.markdown(f'<div class="mq-ref">Section {esc(f.section)}, {esc(f.jurisdiction)}, '
-                f'{esc(CATEGORY_LABELS[f.category])}, {esc(f.source_file)}</div>'
-                f'<div class="mq-head">{esc(headline(i))}</div>', unsafe_allow_html=True)
-    chips = [timing_chip(i), chip(CHANGE_LABELS[f.change_type])]
-    if f.effective_date:
-        chips.append(chip(f"Effective {f.effective_date}", "mono"))
-    if i.route.ready and i.status is Status.PENDING:
-        chips.append(chip(routing.READY_LABEL, "accent"))
-    chips.append(status_chip(i.status))
-    st.markdown("".join(chips), unsafe_allow_html=True)
-    if f.ai_reason:
-        st.caption(md(f"AI reading: {f.ai_reason}"))
-    if f.recommended_action or f.owner:
-        a, b = st.columns([2, 1])
-        if f.recommended_action:
-            a.markdown(f'<div class="mq-box"><div class="label">Recommended action</div>{esc(f.recommended_action)}</div>',
-                       unsafe_allow_html=True)
-        if f.owner:
-            b.markdown(f'<div class="mq-box"><div class="label">Owner</div>{esc(f.owner)}</div>', unsafe_allow_html=True)
-    render_why(i)
-    render_excerpts(i, comparison.old_name)
-    render_facts(i)
-    render_impact(i)
-    render_decision(i, conn, reviewer)
-    render_history(conn, f.finding_id)
+    with st.container(border=True, key="finding_card"):
+        badges = [chip(CATEGORY_LABELS[f.category]), chip(CHANGE_LABELS[f.change_type]), timing_chip(i)]
+        if f.effective_date:
+            badges.append(chip(f"Effective {f.effective_date}", "mono"))
+        if i.route.ready and i.status is Status.PENDING:
+            badges.append(chip(routing.READY_LABEL, "accent"))
+        badges.append(status_chip(i.status))
+        st.markdown("".join(badges), unsafe_allow_html=True)
+        st.markdown(f'<div class="mq-head">{esc(headline(i))}</div>', unsafe_allow_html=True)
+        if f.ai_reason:
+            st.caption(md(f"AI reading: {f.ai_reason}"))
+        render_key_facts(i)
+        st.markdown('<div class="mq-sub">Previous rule and updated rule</div>', unsafe_allow_html=True)
+        render_rules(i)
+        render_money(i)
+        render_impact(i)
+        render_action(i)
+        render_why(i, comparison, cfg)
+        render_by_hand(i)
+        render_evidence(i, comparison)
+        render_facts(i)
+        render_history(conn, f.finding_id)
+        render_decision(i, conn, reviewer)
+
+
+def render_trail(items: list[Item], conn, as_of) -> None:
+    """Evidence trail: one line per finding, the hand-check counter and the findings CSV."""
+    checked = st.session_state.get("hand_checked", set())
+    mine = sum(i.finding.finding_id in checked for i in items)
+    st.markdown('<div class="mq-sub">Evidence trail</div>', unsafe_allow_html=True)
+    st.caption(f"{mine} of {len(items)} checked by hand this session.")
+    lines = []
+    for i in items:
+        f = i.finding
+        marks = " ".join(f"{c.check} {'passed' if c.passed else 'failed'}" for c in f.check_results)
+        by_hand = "checked by hand" if f.finding_id in checked else "not checked by hand"
+        lines.append(f'<div class="mq-hist"><b>Section {esc(f.section)} {esc(f.jurisdiction)}</b>: {esc(marks)}; '
+                     f'{esc(lane_of(i).lower())}; {esc(STATUS_LABELS[i.status].lower())}; {by_hand}</div>')
+    st.markdown("".join(lines), unsafe_allow_html=True)
+    st.download_button("Download findings CSV", csvs.findings_csv([i.finding for i in items], conn),
+                       key="dl_trail", mime="text/csv", file_name=csvs.file_name("findings", as_of))
 
 
 # ---- the page -------------------------------------------------------------------------------
 
-SHARED_KEYS = ("pair", "as_of", "reviewer", "auto_approve", *FILTERS)
+SHARED_KEYS = ("pair", "as_of", "reviewer", "auto_approve", "hand_checked", *FILTERS)
 
 
 def keep_context() -> None:
@@ -509,17 +641,20 @@ def render(cfg: dict | None = None) -> None:
         st.error("No policy pairs found. Check the policies and site sections of maya.config.yaml.")
         return
 
-    c1, c2, c3, c4 = st.columns([3, 1.4, 1.6, 1.6])
+    c1, c2, c3 = st.columns([3, 1.4, 2.2], vertical_alignment="bottom")
     pair = c1.selectbox("Policy pair", pairs, format_func=lambda p: p.label, key="pair")
     if "as_of" not in st.session_state:
         st.session_state["as_of"] = parse_date(str(cfg["as_of_date"]))
     as_of = c2.date_input("As of", key="as_of")
-    reviewer = c3.text_input("Reviewer name", key="reviewer", placeholder="Your name")
     if "auto_approve" not in st.session_state:
         st.session_state["auto_approve"] = routing.approval_mode(cfg) is routing.ApprovalMode.AUTO_APPROVE
-    c4.toggle("Auto-approve", key="auto_approve",
-              help="Off is Pre-approve, the recommended mode: a person signs off findings that pass the rule. "
-                   "On records them as approved by Auto-approved.")
+    with c3.popover("Review settings"):
+        st.text_input("Reviewer name", key="reviewer", placeholder="Your name")
+        st.toggle("Auto-approve", key="auto_approve",
+                  help="Off is Pre-approve, the recommended mode: a person signs off findings that pass the rule. "
+                       "On records them as approved by Auto-approved.")
+    reviewer = st.session_state.get("reviewer", "")
+    c3.caption(f"Reviewing as: {reviewer.strip() or 'not set'}")
     mode = (routing.ApprovalMode.AUTO_APPROVE if st.session_state["auto_approve"]
             else routing.ApprovalMode.PRE_APPROVE)
 
@@ -552,7 +687,7 @@ def render(cfg: dict | None = None) -> None:
             getattr(st, flash[0])(md(flash[1]))
         render_cards(summary(items))
 
-        cols = st.columns([1.4, 1.4, 1.3, 1.3, 1.1, 1.6])
+        cols = st.columns([1.4, 1.4, 1.3, 1.3, 1.5, 1.1], vertical_alignment="bottom")
         options = {
             "f_jurisdiction": cfg["jurisdictions"],
             "f_category": list(CATEGORY_LABELS.values()),
@@ -561,21 +696,22 @@ def render(cfg: dict | None = None) -> None:
         }
         for col, (key, (label, placeholder)) in zip(cols, FILTERS.items()):
             col.selectbox(label, [placeholder, *options[key]], key=key)
-        cols[4].markdown("&nbsp;", unsafe_allow_html=True)
-        cols[4].button("Clear filters", key="clear_filters", on_click=_clear_filters)
-        cols[5].caption("Filters also apply to both exports.")
-
         shown = apply_filters(items, {k: st.session_state.get(k, FILTERS[k][1]) for k in FILTERS})
+        cols[4].markdown(f'<div class="mq-meta" style="margin:0 0 0.6rem 0">{len(shown)} of {len(items)} findings. '
+                         'Filters also apply to both exports.</div>', unsafe_allow_html=True)
+        cols[5].button("Clear filters", key="clear_filters", on_click=_clear_filters)
+
         if not shown:
             st.info("No findings match these filters. Use Clear filters to see all.")
             return
         if st.session_state.get("selected_id") not in {i.finding.finding_id for i in shown}:
             st.session_state["selected_id"] = shown[0].finding.finding_id
-        listing, detail = st.columns([1, 2.2])
+        listing, detail = st.columns([1, 2.3])
         with listing:
             render_list(shown, as_of, conn, reviewer, mode)
         with detail:
             chosen = next(i for i in shown if i.finding.finding_id == st.session_state["selected_id"])
-            render_detail(chosen, comparison, as_of, conn, reviewer)
+            render_detail(chosen, comparison, as_of, conn, reviewer, cfg)
+        render_trail(shown, conn, as_of)
     finally:
         conn.close()

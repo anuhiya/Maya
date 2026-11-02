@@ -19,7 +19,7 @@ def eastern(when) -> str:
 
 
 def labels_for(cfg: dict, conn) -> dict[str, str]:
-    """Finding ID to 'Section 1.1 Avalon' for the selected pair; empty when it cannot be read."""
+    """Finding ID to 'Section 1.1 New York City' for the selected pair; empty when it cannot be read."""
     try:
         view = v.build_view(cfg, conn)
     except Exception:

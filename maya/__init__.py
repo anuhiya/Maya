@@ -1,1 +1,1 @@
-"""Maya: payroll regulatory change analysis (B10)."""
+"""eDelta (package name maya): payroll regulatory change analysis (B10)."""

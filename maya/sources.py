@@ -7,13 +7,14 @@ hides a change.
 import hashlib
 import json
 import re
+import shutil
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import requests
 
-from maya import db
+from maya import db, siteserver
 from maya.ingest import read_document
 from maya.pipeline import policy_id
 
@@ -21,6 +22,7 @@ _VERSION = re.compile(r"_v(\d+)$", re.IGNORECASE)
 _SUFFIXES = (".txt", ".pdf")
 FR_TIMEOUT_SECONDS = 15
 FR_RESULTS = 5
+FR_FETCH = 40  # the search runs wide, then only titles that name a wage or payroll term are kept
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,7 @@ class WatchResult:
     unchanged: list[str]  # sources with documents, all already seen
     empty: list[str]  # sources with no documents
     unseen: list[Doc]  # every new document, for commit()
+    errors: list[str] = field(default_factory=list)  # a source that could not be read
 
 
 @dataclass
@@ -69,8 +72,44 @@ def fingerprint(path) -> str:
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+class SiteError(Exception):
+    """The policy site could not be read or sent a file that does not match its index."""
+
+
+def _http_get(url: str) -> bytes:
+    session = requests.Session()
+    session.trust_env = False  # a local site never goes through a proxy
+    try:
+        response = session.get(url, timeout=FR_TIMEOUT_SECONDS)
+        response.raise_for_status()
+    except requests.RequestException as err:
+        raise SiteError(f"Could not fetch {url}: {type(err).__name__}") from None
+    return response.content
+
+
+def _fetch_site(cfg: dict) -> list[Path]:
+    """Download the site index and every document it lists over HTTP into the fetch folder.
+    Each file must match the sha256 the index gives, or the run flags it and skips the source."""
+    server = cfg["site"]["server"]
+    base = siteserver.ensure_running(cfg)
+    index = json.loads(_http_get(f"{base}/index.json"))
+    target = cfg["_root"] / server["fetch_dir"]
+    shutil.rmtree(target, ignore_errors=True)
+    target.mkdir(parents=True, exist_ok=True)
+    paths = []
+    for entry in index["documents"]:
+        data = _http_get(f"{base}/{entry['file']}")
+        if hashlib.sha256(data).hexdigest() != entry["sha256"]:
+            raise SiteError(f"{entry['file']} does not match the sha256 in the site index; not trusted")
+        (target / entry["file"]).write_bytes(data)
+        paths.append(target / entry["file"])
+    return paths
+
+
 def _files(cfg: dict, source: dict) -> list[Path]:
     base = cfg["_root"] / source["path"]
+    if source["kind"] == "policy_site" and (cfg["site"].get("server") or {}).get("enabled"):
+        return _fetch_site(cfg)  # over HTTP from the local site server, never read from the site folder
     if source["kind"] == "policy_site":  # only what the site index lists is published
         try:
             index = json.loads((cfg["_root"] / cfg["site"]["index_file"]).read_text(encoding="utf-8"))
@@ -96,12 +135,17 @@ def watch_sources(cfg: dict, conn: sqlite3.Connection) -> WatchResult:
     seen = {(row["file_name"], row["fingerprint"]) for row in db.list_document_versions(conn)}
     taken: set[tuple[str, str]] = set()
     by_family: dict[str, list[Doc]] = {}
-    unchanged, empty = [], []
+    unchanged, empty, errors = [], [], []
     for source in cfg["sources"]:
         if not source.get("path"):
             continue  # the Federal Register is not a document folder
         docs = []
-        for path in _files(cfg, source):
+        try:
+            files = _files(cfg, source)
+        except SiteError as err:
+            errors.append(f"{source['name']}: {err}")
+            files = []
+        for path in files:
             version = _version(path, source)
             if version is None:
                 continue
@@ -127,7 +171,7 @@ def watch_sources(cfg: dict, conn: sqlite3.Connection) -> WatchResult:
             unseen.append(doc)
             if i > 0:
                 changes.append(SourceChange(doc.source, doc.trusted, family, docs[i - 1], doc))
-    return WatchResult(changes, unchanged, empty, unseen)
+    return WatchResult(changes, unchanged, empty, unseen, errors)
 
 
 def commit(conn: sqlite3.Connection, docs: list[Doc]) -> None:
@@ -156,14 +200,28 @@ def _get(url: str, params: dict) -> dict:
     return response.json()
 
 
-def search_federal_register(cfg: dict, get=_get) -> tuple[list[InformationalItem], str | None]:
-    """One read-only search for minimum wage and payroll terms. Returns (items, error); never raises."""
+def relevant(title: str, terms) -> bool:
+    """True when the title names one of the wage and payroll terms (whole words, plural allowed)."""
+    return any(re.search(rf"\b{re.escape(t.lower())}s?\b", title.lower()) for t in terms)
+
+
+def relevant_items(cfg: dict, items: list) -> list:
     source = next(s for s in cfg["sources"] if s["kind"] == "federal_register")
-    params = {"conditions[term]": " ".join(source["search_terms"]), "per_page": FR_RESULTS, "order": "newest",
+    return [i for i in items if relevant(i.title, source["search_terms"])]
+
+
+def search_federal_register(cfg: dict, get=_get) -> tuple[list[InformationalItem], str | None]:
+    """One read-only search for wage and payroll terms. Returns (items, error); never raises.
+
+    Only items whose title names a wage or payroll term are kept; an empty list means nothing relevant was found.
+    """
+    source = next(s for s in cfg["sources"] if s["kind"] == "federal_register")
+    query = " OR ".join(f'"{t}"' if " " in t else t for t in source["search_terms"])
+    params = {"conditions[term]": query, "per_page": FR_FETCH, "order": "newest",
               "fields[]": ["title", "publication_date", "html_url"]}
     try:
         data = get(source["url"].rstrip("/") + "/documents.json", params)
-        return [InformationalItem(r["title"], r["publication_date"], r["html_url"])
-                for r in data.get("results", [])], None
+        items = [InformationalItem(r["title"], r["publication_date"], r["html_url"]) for r in data.get("results", [])]
+        return relevant_items(cfg, items)[:FR_RESULTS], None
     except Exception as err:  # network, bad JSON, missing field: the run goes on without it
         return [], f"Federal Register search failed: {type(err).__name__}"

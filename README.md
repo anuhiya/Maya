@@ -1,11 +1,13 @@
-# Maya
+# eDelta
+
+The repository is named Maya and the app is called eDelta.
 
 ## Assumptions
 
 - A standard week is 40 hours. Hours above 40 are paid at 1.5 times the hourly wage. Example: E001 earns $17.06 and works 42 hours, so the rise to $17.25 costs $8.17 a week.
 - A year is 52 weeks. The $273.19 a week in effect becomes $14,205.88 annualized.
 - Employer FICA is 7.65% of the increase: $20.90 a week, or $1,086.75 a year, on that same total.
-- An employee belongs to the jurisdiction of their work location, not their home. E002 lives in Calder but works onsite in Avalon, so Avalon's minimum wage applies.
+- An employee belongs to the jurisdiction of their work location, not their home. E002 lives in Los Angeles but works onsite in New York City, so New York City's minimum wage applies.
 - Employees are matched to a change by four explicit rules in plain code. The AI never matches employees or calculates money.
   - R1, wages: an hourly full- or part-time employee in the same jurisdiction is affected if the wage is below the new minimum, and not affected at or above it. Salaried exempt staff and contractors are excluded.
   - R2, tax rate: every non-contractor employee in the jurisdiction is matched. No dollar figure is calculated.
@@ -62,4 +64,4 @@ Put the demo back to its start (clears the database, fingerprints, unpublished s
 python scripts/reset_demo.py --yes
 ```
 
-Check against `docs/expected.md`: for the main pair, as of 2026-11-02, Maya should show 9 findings, 3 auto-approval candidates, $273.19 a week in effect and $142.80 a week coming.
+Check against `docs/expected.md`: for the main pair, as of 2026-11-02, eDelta should show 9 findings, 3 auto-approval candidates, $273.19 a week in effect and $142.80 a week coming.

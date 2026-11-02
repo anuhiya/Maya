@@ -17,7 +17,7 @@ ASSUMPTIONS = (
     "The base wage is treated as the regular rate: no bonuses or shift pay.",
     "Contractors are excluded. One paid below a new minimum carries a classification warning.",
     "Salaried exempt staff are excluded.",
-    "No city or county minimum wages. Only the gap to the new state minimum is costed.",
+    "No other local or state minimums are modelled. Only the gap to the minimum in the bulletin is costed.",
     "The hours split of hybrid staff is not recorded, so it is not priced.",
 )
 
@@ -76,11 +76,25 @@ def results_table(shown: list) -> str:
         cells = [(r.employee_id, "mono"), (label, ""), (TIMING_LABELS[r.timing], ""),
                  (RESULT_LABELS[r.result], ""), (r.reason, ""), (r.rule_id, "mono"),
                  (r.calculation, "mono"), (inc, "mono")]
-        body += "<tr>" + "".join(f'<td class="{k} {"wrap" if h in wraps else "nw"}">{esc(x)}</td>'
+        body += "<tr>" + "".join(f'<td class="{k} {"calc" if h == "Calculation" else "wrap" if h in wraps else "nw"}">{esc(x)}</td>'
                                  for (x, k), h in zip(cells, heads)) + "</tr>"
     return ('<div class="mq-scroll"><table class="mq-table"><tr>'
-            + "".join(f'<th class="{"wrap" if h in wraps else "nw"}">{h}</th>' for h in heads)
+            + "".join(f'<th class="{"calc" if h == "Calculation" else "wrap" if h in wraps else "nw"}">{h}</th>' for h in heads)
             + f"</tr>{body}</table></div>")
+
+
+TRACK_CARDS = [
+    ("Risk", "What to track: findings that need a decision, unclear or missing dates, failed checks."),
+    ("Efficiency", "What to track: sections compared, answers read by AI, findings ready for one-click sign-off."),
+    ("Cost", "What to track: weekly increase in effect and coming, the employer tax estimate, back pay (needs reviewer input)."),
+]
+
+
+def track_cards() -> str:
+    """Three plain cards naming what to watch. They carry no results of their own."""
+    return '<div class="mq-cards three">' + "".join(
+        f'<div class="mq-card"><div class="label">{esc(a)}</div><div class="sub">{esc(b)}</div></div>'
+        for a, b in TRACK_CARDS) + "</div>"
 
 
 def render(cfg: dict | None = None) -> None:
@@ -94,6 +108,7 @@ def render(cfg: dict | None = None) -> None:
     if view is None:
         return
     v.filter_chips(view.as_of)
+    st.markdown(track_cards(), unsafe_allow_html=True)
     if not view.items:
         st.info("No changes detected. 0 findings, $0.00.")
     elif not view.shown:

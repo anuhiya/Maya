@@ -32,32 +32,32 @@ def run(cfg, **state):
     return at
 
 
-def test_two_download_buttons_with_as_of_in_file_name(cfg):
+def test_three_download_buttons_with_as_of_in_file_name(cfg):
     at = run(cfg, as_of=date(2027, 1, 1))
     buttons = at.get("download_button")
-    assert len(buttons) == 2
+    assert len(buttons) == 3
     labels = [b.proto.label for b in buttons]
-    assert labels == ["Download findings CSV", "Download employee impact CSV"]
+    assert labels == ["Download findings CSV", "Download employee impact CSV", "Download scenario CSV"]
     assert any("Filters" in c.value or "filters" in c.value for c in at.caption)
 
 
 def test_filters_apply_to_counts(cfg):
-    at = run(cfg, f_jurisdiction="Calder")
+    at = run(cfg, f_jurisdiction="Los Angeles")
     captions = " ".join(c.value for c in at.caption)
     assert "3 findings" in captions
-    assert "Jurisdiction: Calder" in " ".join(m.value for m in at.markdown)
+    assert "Jurisdiction: Los Angeles" in " ".join(m.value for m in at.markdown)
 
 
-def test_avalon_filter_counts_in_exports(cfg):
+def test_nyc_filter_counts_in_exports(cfg):
     import csv, io
     from maya import export
     from maya.ui import view
     from maya import db
     import streamlit as st
-    st.session_state["f_jurisdiction"] = "Avalon"
+    st.session_state["f_jurisdiction"] = "New York City"
     conn = db.connect(cfg["state"]["database"])
     v = view.build_view(cfg, conn)
     findings = [i.finding for i in v.shown]
     rows = [r for i in v.shown for r in i.rows]
     assert len(list(csv.DictReader(io.StringIO(export.findings_csv(findings, conn))))) == 4
-    assert len(list(csv.DictReader(io.StringIO(export.impact_csv(rows))))) == 113  # 112 Avalon rows + hybrid E076
+    assert len(list(csv.DictReader(io.StringIO(export.impact_csv(rows))))) == 113  # 112 New York City rows + hybrid E076

@@ -34,19 +34,19 @@ def wage(juris, value, timing):
     return finding(juris, Category.WAGES, value, timing)
 
 
-def test_avalon_minimum_wage(employees):
-    rows = match_finding(wage("Avalon", "17.25", Timing.CURRENT), employees)
+def test_nyc_minimum_wage(employees):
+    rows = match_finding(wage("New York City", "17.25", Timing.CURRENT), employees)
     affected = [r for r in rows if r.result is R.AFFECTED]
     assert len(affected) == 10
     assert sum_by_timing(rows)[Timing.CURRENT] == D("273.19")
     assert annualized(D("273.19"))[0] == D("14205.88")
-    assert all(r.jurisdiction == "Avalon" for r in rows if r.result is not R.NEEDS_REVIEW)
+    assert all(r.jurisdiction == "New York City" for r in rows if r.result is not R.NEEDS_REVIEW)
     assert [r.employee_id for r in rows if r.result is R.NEEDS_REVIEW] == ["E076"]
     assert all(r.reason and r.rule_id == "R1" for r in rows)
 
 
-def test_calder_minimum_wage_is_future(employees):
-    rows = match_finding(wage("Calder", "15.50", Timing.FUTURE), employees)
+def test_la_minimum_wage_is_future(employees):
+    rows = match_finding(wage("Los Angeles", "15.50", Timing.FUTURE), employees)
     assert len([r for r in rows if r.result is R.AFFECTED]) == 7
     totals = sum_by_timing(rows)
     assert totals[Timing.FUTURE] == D("142.80")
@@ -54,8 +54,8 @@ def test_calder_minimum_wage_is_future(employees):
     assert annualized(totals[Timing.FUTURE])[0] == D("7425.60")
 
 
-def test_meridian_live_demo(employees):
-    rows = rows_for(wage("Meridian", "15.00", Timing.FUTURE), employees)
+def test_chicago_live_demo(employees):
+    rows = rows_for(wage("Chicago", "15.00", Timing.FUTURE), employees)
     got = {k: r.weekly_increase for k, r in rows.items() if r.result is R.AFFECTED}
     assert got == {"E048": D("36.00"), "E055": D("31.25"), "E064": D("9.98"),
                    "E065": D("0.22"), "E072": D("12.00"), "E080": D("9.20")}
@@ -63,7 +63,7 @@ def test_meridian_live_demo(employees):
 
 
 def test_every_employee_in_jurisdiction_gets_a_row(employees):
-    for juris in ("Avalon", "Calder", "Meridian"):
+    for juris in ("New York City", "Los Angeles", "Chicago"):
         expected = {e.employee_id for e in employees if e.jurisdiction == juris}
         rows = match_finding(wage(juris, "99", Timing.CURRENT), employees)
         assert expected <= {r.employee_id for r in rows}
@@ -86,73 +86,73 @@ CASES = {
 
 
 @pytest.mark.parametrize("eid", CASES)
-def test_avalon_edge_cases(employees, eid):
+def test_nyc_edge_cases(employees, eid):
     value, result, amount, calc = CASES[eid]
-    row = rows_for(wage("Avalon", value, Timing.CURRENT), employees)[eid]
+    row = rows_for(wage("New York City", value, Timing.CURRENT), employees)[eid]
     assert row.result is result
     assert row.weekly_increase == (None if amount is None else D(amount))
     assert row.calculation == calc
     assert row.new_minimum == D(value)
 
 
-def test_calder_and_meridian_edge_cases(employees):
-    calder = rows_for(wage("Calder", "15.50", Timing.FUTURE), employees)
-    assert calder["E025"].weekly_increase == D("20.90")
-    assert calder["E025"].timing is Timing.FUTURE
-    assert calder["E071"].weekly_increase == D("16.00")
-    assert calder["E076"].result is R.NOT_AFFECTED  # hybrid, above $15.50
-    mer = rows_for(wage("Meridian", "15.00", Timing.FUTURE), employees)
+def test_la_and_chicago_edge_cases(employees):
+    la = rows_for(wage("Los Angeles", "15.50", Timing.FUTURE), employees)
+    assert la["E025"].weekly_increase == D("20.90")
+    assert la["E025"].timing is Timing.FUTURE
+    assert la["E071"].weekly_increase == D("16.00")
+    assert la["E076"].result is R.NOT_AFFECTED  # hybrid, above $15.50
+    mer = rows_for(wage("Chicago", "15.00", Timing.FUTURE), employees)
     assert mer["E080"].weekly_increase == D("9.20")
     assert mer["E078"].result is R.NOT_AFFECTED
     assert mer["E068"].result is R.NOT_AFFECTED  # exactly at the minimum
 
 
-def test_remote_calder_worker_with_avalon_office_not_hit_by_avalon(employees):
-    avalon = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)
-    assert "E071" not in avalon  # works in Calder; only the primary jurisdiction matches
+def test_remote_la_worker_with_nyc_office_not_hit_by_nyc(employees):
+    nyc = rows_for(wage("New York City", "17.25", Timing.CURRENT), employees)
+    assert "E071" not in nyc  # works in Los Angeles; only the primary jurisdiction matches
 
 
 def test_hybrid_employee_is_matched_by_primary_jurisdiction_only(employees):
-    avalon = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)
-    assert avalon["E076"].jurisdiction == "Calder"  # only a hybrid review row, see below
-    assert avalon["E076"].result is R.NEEDS_REVIEW
-    assert "E078" not in avalon  # secondary is Calder, not Avalon
-    assert avalon["E077"].result is R.NOT_AFFECTED
+    nyc = rows_for(wage("New York City", "17.25", Timing.CURRENT), employees)
+    assert nyc["E076"].jurisdiction == "Los Angeles"  # only a hybrid review row, see below
+    assert nyc["E076"].result is R.NEEDS_REVIEW
+    assert "E078" not in nyc  # secondary is Los Angeles, not New York City
+    assert nyc["E077"].result is R.NOT_AFFECTED
 
 
 def test_hybrid_below_secondary_minimum_needs_review_with_upper_bound(employees):
-    row = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)["E076"]
+    row = rows_for(wage("New York City", "17.25", Timing.CURRENT), employees)["E076"]
     assert row.result is R.NEEDS_REVIEW
-    assert row.reason == "Needs review: works part of the week in Avalon"
+    assert row.reason == "Needs review: works part of the week in New York City"
     assert row.weekly_increase is None
     assert "1.45 x 40 h = $58.00" in row.calculation and "upper bound" in row.calculation.lower()
     assert row.new_minimum == D("17.25")
-    row = rows_for(wage("Calder", "15.50", Timing.FUTURE), employees)["E078"]
+    row = rows_for(wage("Los Angeles", "15.50", Timing.FUTURE), employees)["E078"]
     assert row.result is R.NEEDS_REVIEW
-    assert row.reason == "Needs review: works part of the week in Calder"
+    assert row.reason == "Needs review: works part of the week in Los Angeles"
     assert "0.30 x 24 h = $7.20" in row.calculation and row.timing is Timing.FUTURE
 
 
 def test_hybrid_review_rows_never_enter_totals(employees):
-    for juris, value, timing, total in (("Avalon", "17.25", Timing.CURRENT, "273.19"),
-                                        ("Calder", "15.50", Timing.FUTURE, "142.80")):
+    for juris, value, timing, total in (("New York City", "17.25", Timing.CURRENT, "273.19"),
+                                        ("Los Angeles", "15.50", Timing.FUTURE, "142.80")):
         rows = match_finding(wage(juris, value, timing), employees)
         assert any(r.result is R.NEEDS_REVIEW for r in rows)
         assert sum_by_timing(rows)[timing] == D(total)
 
 
 def test_hybrid_at_or_above_secondary_minimum_gets_no_row(employees):
-    assert "E076" not in rows_for(wage("Avalon", "15.80", Timing.CURRENT), employees)
-    assert "E076" not in rows_for(wage("Avalon", "15.00", Timing.CURRENT), employees)
+    assert "E076" not in rows_for(wage("New York City", "15.80", Timing.CURRENT), employees)
+    assert "E076" not in rows_for(wage("New York City", "15.00", Timing.CURRENT), employees)
 
 
 def test_hybrid_review_only_for_wage_findings(employees):
-    f = finding("Avalon", Category.TAX_RATE, "3.1", Timing.FUTURE)
+    f = finding("New York City", Category.TAX_RATE, "3.1", Timing.FUTURE)
     assert "E076" not in rows_for(f, employees)
 
 
 def test_exempt_is_excluded_without_warning_and_reason_names_implied_rate(employees):
-    row = rows_for(wage("Avalon", "17.25", Timing.CURRENT), employees)["E016"]
+    row = rows_for(wage("New York City", "17.25", Timing.CURRENT), employees)["E016"]
     assert row.result is R.EXCLUDED
     assert row.flags == []
     assert "below" in row.reason and "17.25" in row.reason
@@ -160,14 +160,14 @@ def test_exempt_is_excluded_without_warning_and_reason_names_implied_rate(employ
 
 
 def test_exempt_above_minimum_has_plain_reason(employees):
-    rows = rows_for(wage("Avalon", "10.00", Timing.CURRENT), employees)
+    rows = rows_for(wage("New York City", "10.00", Timing.CURRENT), employees)
     exempt = [r for r in rows.values() if r.employment_type.value == "salaried_exempt"]
     assert exempt and all(r.result is R.EXCLUDED and "below" not in r.reason for r in exempt)
 
 
 @pytest.mark.parametrize("eid,juris,value,timing", [
-    ("E023", "Avalon", "17.25", Timing.CURRENT),
-    ("E047", "Calder", "15.50", Timing.FUTURE),
+    ("E023", "New York City", "17.25", Timing.CURRENT),
+    ("E047", "Los Angeles", "15.50", Timing.FUTURE),
 ])
 def test_contractor_below_minimum_gets_classification_warning(employees, eid, juris, value, timing):
     row = rows_for(wage(juris, value, timing), employees)[eid]
@@ -179,13 +179,13 @@ def test_contractor_below_minimum_gets_classification_warning(employees, eid, ju
 
 
 def test_contractor_at_or_above_minimum_has_no_warning(employees):
-    rows = rows_for(wage("Avalon", "10.00", Timing.CURRENT), employees)
+    rows = rows_for(wage("New York City", "10.00", Timing.CURRENT), employees)
     assert rows["E023"].result is R.EXCLUDED
     assert rows["E023"].flags == []
 
 
 def test_tax_rate_r2(employees):
-    rows = match_finding(finding("Avalon", Category.TAX_RATE, "3.1", Timing.FUTURE,
+    rows = match_finding(finding("New York City", Category.TAX_RATE, "3.1", Timing.FUTURE,
                                  section="1.2"), employees)
     matched = [r for r in rows if r.result is R.MATCHED_NO_ESTIMATE]
     assert len(matched) == 25
@@ -196,30 +196,30 @@ def test_tax_rate_r2(employees):
 
 
 def test_filing_deadline_r3(employees):
-    rows = match_finding(finding("Calder", Category.FILING_DEADLINE, "20", Timing.FUTURE,
+    rows = match_finding(finding("Los Angeles", Category.FILING_DEADLINE, "20", Timing.FUTURE,
                                  section="2.2"), employees)
     assert len([r for r in rows if r.result is R.MATCHED_NO_ESTIMATE]) == 24
     assert {r.rule_id for r in rows} == {"R3"}
 
 
 def test_reporting_other_than_new_hire_r4(employees):
-    f = finding("Calder", Category.REPORTING, timing=Timing.UNKNOWN, section="2.3",
+    f = finding("Los Angeles", Category.REPORTING, timing=Timing.UNKNOWN, section="2.3",
                 new_rule="Every employer shall file an earnings report twice each calendar year.")
     rows = match_finding(f, employees)
     assert len([r for r in rows if r.result is R.MATCHED_NO_ESTIMATE]) == 24
     assert {r.rule_id for r in rows} == {"R4"}
 
 
-def test_pay_statement_reporting_r4_reaches_25_in_avalon(employees):
-    f = finding("Avalon", Category.REPORTING, timing=Timing.FUTURE, section="1.3",
+def test_pay_statement_reporting_r4_reaches_25_in_nyc(employees):
+    f = finding("New York City", Category.REPORTING, timing=Timing.FUTURE, section="1.3",
                 new_rule="Pay statements shall show the hours worked at each rate of pay.")
     assert len([r for r in match_finding(f, employees) if r.result is R.MATCHED_NO_ESTIMATE]) == 25
 
 
 @pytest.mark.parametrize("juris,section,change,text", [
-    ("Avalon", "1.4", ChangeType.ADDED,
+    ("New York City", "1.4", ChangeType.ADDED,
      "Every employer shall give each newly hired employee a written notice."),
-    ("Meridian", "3.3", ChangeType.SUBSTANTIVE,
+    ("Chicago", "3.3", ChangeType.SUBSTANTIVE,
      "Every employer shall report each NEWLY HIRED or rehired employee within 10 days."),
 ])
 def test_new_hire_reporting_matches_no_current_employee(employees, juris, section, change, text):
@@ -231,14 +231,14 @@ def test_new_hire_reporting_matches_no_current_employee(employees, juris, sectio
 
 
 def test_new_hire_terms_come_from_config(employees):
-    f = finding("Calder", Category.REPORTING, new_rule="Report each new starter promptly.")
+    f = finding("Los Angeles", Category.REPORTING, new_rule="Report each new starter promptly.")
     cfg = {"matching": {"new_hire_terms": ["new starter"]}}
     rows = match_finding(f, employees, cfg=cfg)
     assert {r.result for r in rows} == {R.NOT_AFFECTED}
 
 
 def test_wording_only_matches_nobody(employees):
-    f = finding("Meridian", Category.WAGES, change=ChangeType.WORDING_ONLY, section="3.2")
+    f = finding("Chicago", Category.WAGES, change=ChangeType.WORDING_ONLY, section="3.2")
     rows = match_finding(f, employees)
     assert rows and {r.result for r in rows} == {R.NOT_AFFECTED}
     assert {r.rule_id for r in rows} == {"none"}
@@ -246,7 +246,7 @@ def test_wording_only_matches_nobody(employees):
 
 
 def test_unclear_category_needs_review_for_non_contractors(employees):
-    rows = match_finding(finding("Avalon", Category.UNCLEAR), employees)
+    rows = match_finding(finding("New York City", Category.UNCLEAR), employees)
     for r in rows:
         if r.employment_type.value == "contractor":
             assert r.result is R.EXCLUDED
@@ -258,7 +258,7 @@ def test_unclear_category_needs_review_for_non_contractors(employees):
 
 
 def test_wage_finding_without_a_value_gives_no_estimate(employees):
-    f = finding("Avalon", Category.WAGES, None)
+    f = finding("New York City", Category.WAGES, None)
     rows = match_finding(f, employees)
     hourly = [r for r in rows if r.employment_type.value.startswith("hourly")]
     assert hourly and {r.result for r in hourly} == {R.MATCHED_NO_ESTIMATE}
@@ -266,7 +266,7 @@ def test_wage_finding_without_a_value_gives_no_estimate(employees):
 
 
 def test_rows_carry_finding_id_and_timing(employees):
-    f = wage("Calder", "15.50", Timing.FUTURE)
+    f = wage("Los Angeles", "15.50", Timing.FUTURE)
     rows = match_finding(f, employees)
     assert {r.finding_id for r in rows} == {f.finding_id}
     assert {r.timing for r in rows} == {Timing.FUTURE}

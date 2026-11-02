@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 import tomllib
 from dataclasses import dataclass, field
@@ -20,7 +21,11 @@ TIMEOUT_SECONDS = 60
 REASONING_EFFORT = "low"
 RATE_LIMIT_RETRIES = 3
 RATE_LIMIT_DEFAULT_WAIT = 10
-RETRYABLE_PLAN_ERRORS = ("did not call a tool", "Parsing failed")
+RETRYABLE_PLAN_ERRORS = ("did not call a tool", "Parsing failed", "Tool call validation failed",
+                         "not in request.tools", "attempted to call tool", "tool_use_failed")
+PLAN_RETRIES = 2  # extra planner asks after the first one fails
+PLAN_BACKOFF_SECONDS = 1  # doubled on each retry
+PLAN_CORRECTION = "Call only one of the listed tools by its exact name."
 SECRETS_PATH = ROOT / ".streamlit" / "secrets.toml"
 
 log = logging.getLogger("maya.ai.llm")
@@ -62,12 +67,19 @@ def _secrets(path):
         return {}
 
 
+_TRY_AGAIN = re.compile(r"try again in (?:(\d+)m)?(\d+(?:\.\d+)?)s", re.IGNORECASE)
+
+
 def _retry_after(err):
-    """Seconds Groq asks us to wait, or the default."""
+    """Seconds Groq asks us to wait (header, else the "try again in 2.5s" of a token-per-minute reply), or the default."""
     try:
         return float(err.response.headers["retry-after"])
     except (AttributeError, KeyError, TypeError, ValueError):
-        return RATE_LIMIT_DEFAULT_WAIT
+        pass
+    found = _TRY_AGAIN.search(str(err))
+    if found:
+        return float(found.group(1) or 0) * 60 + float(found.group(2))
+    return RATE_LIMIT_DEFAULT_WAIT
 
 
 class LLM:
@@ -84,6 +96,7 @@ class LLM:
         self.records = []
         self.federal_register = None  # items the agent's search found, saved with the run
         self.on_wait = None  # called with the seconds to wait before a rate-limit retry
+        self.on_plan_retry = None  # called with (retry number, reason) before the planner is asked again
         self._client = client
         self._player = None
         if self.provider == "replay":
@@ -152,11 +165,12 @@ class LLM:
         return reply
 
     def _choose_tool(self, model, messages, tools):
-        """Ask the planner for a tool; if it names none, ask again (up to two more times)."""
-        asked = messages
-        for attempt in range(3):
+        """Ask the planner for a tool. If it names none, or Groq rejects its call (HTTP 400), ask again up to
+        PLAN_RETRIES more times with a short correction and a growing pause."""
+        asked, choice = messages, "required"
+        for attempt in range(PLAN_RETRIES + 1):
             try:
-                response = self._create("plan", model, asked, tools=tools, tool_choice="required")
+                response = self._create("plan", model, asked, tools=tools, tool_choice=choice)
                 calls = response.choices[0].message.tool_calls or []
                 if calls:
                     return {"name": calls[0].function.name, "arguments": json.loads(calls[0].function.arguments)}
@@ -168,7 +182,12 @@ class LLM:
             except (ValueError, AttributeError):
                 problem = f"{model} gave a tool call that is not valid JSON."
             log.warning("planner attempt %d: %s", attempt + 1, problem)
-            asked = messages + [{"role": "user", "content": "Call exactly one of the tools now."}]
+            if attempt == PLAN_RETRIES:
+                break
+            if self.on_plan_retry:
+                self.on_plan_retry(attempt + 1, problem)
+            time.sleep(PLAN_BACKOFF_SECONDS * 2 ** attempt)
+            asked, choice = messages + [{"role": "system", "content": PLAN_CORRECTION}], "auto"  # "required" failed
         raise LLMError(problem)
 
     def _replay(self, kind, schema, system, user, digest):

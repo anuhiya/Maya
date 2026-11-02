@@ -1,0 +1,33 @@
+{
+  "jurisdiction": "Los Angeles",
+  "level": "city initiative",
+  "enacted": false,
+  "covers_jurisdictions": [
+    "Los Angeles"
+  ],
+  "covers": {
+    "text": "employers in the City of Los Angeles",
+    "quote": "increase the minimum wage in the City of Los Angeles"
+  },
+  "applies_reason": "The official summary sets $25.00 an hour for employers with 26 or more employees. The data holds 80 employees, so the $25.00 tier is used. The summary states no effective date, so the timing is unknown and the amounts are what it would cost if enacted from an unstated date.",
+  "rule": {
+    "title": "Minimum Wage",
+    "section": "Initiative ordinance",
+    "wage": "25.00",
+    "unit": "dollars per hour",
+    "effective_date": "Not stated in the saved text",
+    "quote": "$25.00 per hour for employers with 26 or more employees"
+  },
+  "schedule": {
+    "name": "26 or more employees",
+    "quote": "$20.00 per hour for smaller employers"
+  },
+  "not_priced": [
+    "The $20.00 tier is for smaller employers and does not apply: the data holds 80 employees.",
+    "Later steps ($30.00 by 2030, at least 3 percent a year after) are not priced.",
+    "The full proposed ordinance is a scanned PDF the app cannot read, so only the official summary is used."
+  ],
+  "not_priced_quotes": [
+    "The minimum wage would increase to $30.00 per hour by 2030 (by 2032 for smaller employers), and at least 3% annually thereafter."
+  ]
+}
