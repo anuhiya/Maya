@@ -13,7 +13,7 @@ from typing import Callable, Protocol
 
 from maya import cost, db, routing, site, sources
 from maya.ai import prompts
-from maya.ai.llm import LLM, LLMError
+from maya.ai.llm import LLM, PLAN_RETRIES, LLMError
 from maya.ai.replay import ReplayError
 from maya.employees import load_employees
 from maya.findings import CompareResult
@@ -147,7 +147,7 @@ class Agent:
         self.emit(LogTag.RESULT, f"Waiting for the model (rate limit): {seconds:g} seconds, then retrying.")
 
     def _plan_retry(self, number: int, problem: str) -> None:
-        self.emit(LogTag.CHECK, f"Planner retry {number} of 2: the model gave no valid tool call. "
+        self.emit(LogTag.CHECK, f"Planner retry {number} of {PLAN_RETRIES}: the model gave no valid tool call. "
                                 f"Asking again with a correction. ({problem[:140]})")
 
     def check(self, passed: bool, text: str) -> None:

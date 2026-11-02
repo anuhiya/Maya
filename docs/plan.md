@@ -69,7 +69,7 @@ failed CHECK. The run stops after 25 steps.
 
 **Run steps:** the model gets the goal ("find what changed since the approved version, who it affects,
 what it costs, who must decide") and the tool list, calls one tool at a time, reads each result, and ends
-with `finish`. If Groq rejects the planner's tool call (HTTP 400) the call is retried twice with a correction and a pause; if it still fails, code may choose the next step from the fixed order, at most twice per run, and the log says "Planner fallback" and "Chosen by code, not the model". A failed check gets one retry with the reason; a second failure sends the finding to the
+with `finish`. If Groq rejects the planner's tool call (HTTP 400) the call is retried once with a correction and a pause (and after a "Tool choice is required" refusal the run stays on tool choice "auto"); after two failed attempts in a step, code may choose the next step from the fixed order, at most six times per run (max_planner_fallbacks), and the log says "Planner fallback" and "Chosen by code, not the model". A failed check gets one retry with the reason; a second failure sends the finding to the
 reviewer with "AI answer failed its check."
 
 **Sources it watches:**

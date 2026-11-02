@@ -301,7 +301,7 @@ def test_planner_retry_and_rate_limit_waits_are_logged(env):
     llm.on_plan_retry(1, "Tool call validation failed")
     llm.on_wait(7)
     texts = [l.text for l in run_agent.log]
-    assert texts[0].startswith("Planner retry 1 of 2") and texts[1] == "Waiting for the model (rate limit): 7 seconds, then retrying."
+    assert texts[0].startswith("Planner retry 1 of 1") and texts[1] == "Waiting for the model (rate limit): 7 seconds, then retrying."
 
 
 # ---- Federal Register: only wage and payroll titles are kept (A2) ------------------------------------
@@ -335,3 +335,59 @@ def test_live_search_drops_unrelated_titles_and_says_so_when_nothing_matches(env
     result = run(env, flow(2), get=lambda u, p: {"results": [mixed["results"][0]]})
     assert not result.informational
     assert any(l.text.startswith("No relevant items found.") for l in result.log)
+
+
+# ---- a planner that keeps refusing in one step: the run finishes on the fixed order (A2, A4) -----------
+
+class Groq400(Exception):
+    status_code = 400
+
+
+class FakeGroq:
+    """A Groq client that answers planner calls from a queue: an Exception is raised, anything else is a tool call."""
+
+    def __init__(self, *replies):
+        self.replies, self.calls = list(replies), []
+        from types import SimpleNamespace
+        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
+
+    def _create(self, **kwargs):
+        from types import SimpleNamespace
+        self.calls.append(kwargs)
+        item = self.replies.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        name, args = item
+        call = SimpleNamespace(function=SimpleNamespace(name=name, arguments=json.dumps(args)))
+        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=[call], content=None))])
+
+
+def test_a_step_where_the_model_refuses_twice_is_taken_by_code_after_at_most_three_model_calls(env, monkeypatch):
+    monkeypatch.setattr("maya.ai.llm.time.sleep", lambda s: None)
+    cfg, conn = env
+    refusal = Groq400("Error code: 400 - Tool choice is required, but model did not call a tool")
+    script = flow(2)
+    client = FakeGroq(refusal, refusal, *script[1:])  # step 1: two refusals; the model then takes every later step
+    replay = ReplayLLM(cfg=cfg, env={"MAYA_LLM_PROVIDER": "replay", "MAYA_REPLAY_RUN": "run"})
+    replay.summary = "Compared the documents."
+
+    class Hybrid(LLM):
+        """Planner calls go to the fake Groq client; the AI reading comes from the saved answers."""
+
+        def call(self, kind, system, user, **kw):
+            reply = replay.call(kind, system, user, **kw)
+            self.records.append(replay.records[-1])
+            return reply
+
+    llm = Hybrid(cfg=cfg, env={"GROQ_API_KEY": "k", "MAYA_LLM_PROVIDER": "groq"}, client=client,
+                 secrets_path=cfg["_root"] / "none.toml")
+    result = agent.Agent(cfg, agent.LLMPlanner(llm), llm, conn, federal_register_get=lambda url, params: FR).run()
+    assert result.status == "finished" and len(result.findings) == 9
+    assert (result.in_effect, result.coming) == (Decimal("273.19"), Decimal("142.80"))
+    fallbacks = [l for l in result.log if l.text.startswith("Planner fallback")]
+    assert len(fallbacks) == 1 and "code chose watch_sources" in fallbacks[0].text
+    chosen = [l for l in result.log if l.tag is LogTag.PLAN and "Chosen by code, not the model (planner fallback)" in l.text]
+    assert len(chosen) == 1
+    assert len(client.calls) == 2 + (len(script) - 1)  # the refused step cost exactly two model calls
+    assert [c["tool_choice"] for c in client.calls[:2]] == ["required", "auto"]
+    assert all(c["tool_choice"] == "auto" for c in client.calls[1:])  # sticky for the rest of the run
