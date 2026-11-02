@@ -129,6 +129,8 @@ site:
 # every document seen. It is gitignored.
 state:
   database: maya.db
+  # Set by `scripts/reset_demo.py --empty`: every findings page stays empty until the agent has run once.
+  empty_marker: maya.empty
 
 # The agent stops after this many steps, refused ones included.
 agent:

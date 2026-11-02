@@ -6,6 +6,8 @@ from pathlib import Path
 
 import streamlit as st
 
+from maya import state
+
 ASSETS = Path(__file__).resolve().parents[2] / "assets"
 LOGO, ICON = ASSETS / "edelta-logo.png", ASSETS / "edelta-icon.png"
 BG, SURFACE, INK, MUTED, LINE, ACCENT = "#07081F", "#0B0D33", "#F3F5F9", "#9AA3C7", "#151A52", "#66B3FF"
@@ -229,3 +231,13 @@ def footer_html() -> str:
 def page_icon() -> str:
     """The browser tab icon: the circular e mark, or a plain Streamlit icon when its file is missing."""
     return str(ICON) if ICON.is_file() else ":material/circle:"
+
+
+def empty_page(cfg: dict, kicker: str, title: str) -> bool:
+    """The clean empty state of a findings page: its header, one line and a pointer. True when it was shown."""
+    if not state.is_empty(cfg):
+        return False
+    st.markdown(f'<div class="mq-kicker">{esc(kicker)}</div><div class="mq-title">{esc(title)}</div>',
+                unsafe_allow_html=True)
+    st.info(state.EMPTY_LINE)
+    return True

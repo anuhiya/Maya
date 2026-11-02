@@ -10,10 +10,10 @@ from pathlib import Path
 
 import streamlit as st
 
-from maya import cost, db, routing
+from maya import cost, db, routing, state
 from maya import export as csvs
 from maya.ai.llm import LLM, LLMError, MissingSettingError
-from maya.ai.replay import ReplayError
+from maya.ai.replay import RecordPlayer, ReplayError
 from maya.employees import load_employees
 from maya.findings import CompareResult
 from maya.impact import match_finding
@@ -23,7 +23,7 @@ from maya.pipeline import compare_documents
 from maya.site import load_config
 from maya.split import read_sections
 from maya.timing import classify, parse_date
-from maya.ui.style import chip, esc, md
+from maya.ui.style import chip, empty_page, esc, md
 
 GROUPS = ("Needs review", "Current", "Future")
 CATEGORY_LABELS = {Category.WAGES: "Wages", Category.TAX_RATE: "Tax rate",
@@ -99,6 +99,10 @@ def policy_pairs(cfg: dict) -> list[Pair]:
         if (a["file"], b["file"]) not in seen:
             pairs.append(Pair(label(site_dir / a["file"], site_dir / b["file"]),
                               site_dir / a["file"], site_dir / b["file"]))
+    if len(ordered) > 2:  # everything published since the first version, so the findings add up
+        first, last = ordered[0], ordered[-1]
+        pairs.append(Pair(label(site_dir / first["file"], site_dir / last["file"]) + " (all changes)",
+                          site_dir / first["file"], site_dir / last["file"]))
     return pairs
 
 
@@ -112,7 +116,19 @@ def replay_runs(cfg: dict) -> list[str]:
 def _stamp(cfg: dict, pair: Pair) -> tuple:
     folder = cfg["_root"] / cfg["llm"]["replay_dir"]
     files = [pair.old, pair.new, *sorted(folder.glob("*.json"))]
-    return tuple((str(p), p.stat().st_mtime_ns, p.stat().st_size) for p in files if p.exists())
+    return (*((str(p), p.stat().st_mtime_ns, p.stat().st_size) for p in files if p.exists()), state.run_count(cfg))
+
+
+def _agent_answers(cfg: dict) -> list[dict]:
+    """Every AI answer the agent saved in the database, so findings from a live run need no second model call."""
+    database = cfg["_root"] / cfg["state"]["database"]
+    if not database.exists():
+        return []
+    conn = db.connect(database)
+    try:
+        return [r for run in db.list_runs(conn) for r in run["exchanges"]]
+    finally:
+        conn.close()
 
 
 def _compare(cfg: dict, pair: Pair) -> Comparison:
@@ -125,6 +141,13 @@ def _compare(cfg: dict, pair: Pair) -> Comparison:
             break
         except ReplayError:
             continue
+    if result is None and (records := _agent_answers(cfg)):
+        try:
+            llm = LLM(cfg=cfg, env={"MAYA_LLM_PROVIDER": "replay", "MAYA_REPLAY_RUN": "database"},
+                      player=RecordPlayer(records))
+            result = compare_documents(pair.old, pair.new, llm=llm, cfg=cfg)
+        except ReplayError:
+            result = None
     if result is None:
         try:
             result = compare_documents(pair.old, pair.new, llm=LLM(cfg=cfg), cfg=cfg)
@@ -634,6 +657,8 @@ def _clear_filters() -> None:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Review queue", "Policy changes waiting for review"):
+        return
     keep_context()
     st.markdown('<div class="mq-kicker">Review queue</div>', unsafe_allow_html=True)
     pairs = policy_pairs(cfg)

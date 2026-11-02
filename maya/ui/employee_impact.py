@@ -6,7 +6,7 @@ from maya.models import ImpactResult, Timing
 from maya.site import load_config
 from maya.ui import view as v
 from maya.ui.review_queue import RESULT_LABELS, TIMING_LABELS, money
-from maya.ui.style import esc
+from maya.ui.style import empty_page, esc
 
 ALL = "All jurisdictions"
 
@@ -99,6 +99,8 @@ def track_cards() -> str:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Employee impact", "Who is affected and what it costs"):
+        return
     conn = db.connect(cfg["_root"] / cfg["state"]["database"])
     try:
         view = v.load_view(cfg, conn)

@@ -150,6 +150,7 @@ def reset(cfg=None):
             shutil.move(str(f), held_dir / f.name)
     build_index(cfg)
     (cfg["_root"] / cfg["state"]["database"]).unlink(missing_ok=True)  # reviews, runs and fingerprints
+    (cfg["_root"] / cfg["state"].get("empty_marker", "maya.empty")).unlink(missing_ok=True)  # back to the usual start
     for source in cfg["sources"]:
         if source["kind"] == "upload":
             shutil.rmtree(cfg["_root"] / source["path"], ignore_errors=True)

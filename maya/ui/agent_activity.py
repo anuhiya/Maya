@@ -215,8 +215,12 @@ def _controls(cfg: dict) -> None:
     use_saved = a.checkbox("Use saved run (backup)", value=not _has_key(cfg), key="use_saved",
                            help="Replays the saved AI answers instead of calling the model.")
     step_mode = b.checkbox("Step by step", key="step_mode", help="Pause before every step until you press Next step.")
+    if use_saved:
+        st.caption("Saved run (replay): plays back the saved AI answers from data/replays. No model call is made.")
+    else:
+        st.caption("Live run: the planner and reader models on Groq decide and read. It needs a Groq key.")
     c = st.columns([1.2, 1, 1, 1.2, 1])
-    if c[0].button("Run saved" if use_saved else "Run live", key="run_agent", type="primary", disabled=busy):
+    if c[0].button("Load saved run" if use_saved else "Run agent", key="run_agent", type="primary", disabled=busy):
         if _start(cfg, use_saved, step_mode):
             st.rerun()
     can_next = bool(run) and ((index is not None and cur < len(events) - 1) or run.waiting)

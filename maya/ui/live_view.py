@@ -55,7 +55,7 @@ def progress(states: dict[str, str]) -> float:
 def narration(ev: dict | None, total: int | None) -> str:
     """One plain line such as "Step 3 of 10: Read with AI. 9 sections in the old file and 10 in the new."."""
     if ev is None:
-        return "No step yet. Press Run live or Use saved run."
+        return "No step yet. Press Run agent, or tick Use saved run and press Load saved run."
     label = NODE_LABEL.get(ev["tool"], ev["tool"])
     head = f"Step {ev['n']}" + (f" of {total}" if total else "") + f": {label}."
     change = next((c for c in ev["changes"] if c["id"] == ev["change"]), None)

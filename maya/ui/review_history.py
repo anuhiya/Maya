@@ -7,7 +7,7 @@ from maya import db
 from maya.site import load_config
 from maya.ui import review_queue as rq
 from maya.ui import view as v
-from maya.ui.style import esc
+from maya.ui.style import empty_page, esc
 
 ET = ZoneInfo("America/New_York")
 ALL_FINDINGS, ALL_STATUSES = "All findings", "All statuses"
@@ -33,6 +33,8 @@ def _clear() -> None:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Review history", "Every decision, newest first"):
+        return
     rq.keep_context()
     v.title("Review history", "Every decision, newest first")
     conn = db.connect(cfg["_root"] / cfg["state"]["database"])

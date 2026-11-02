@@ -17,7 +17,7 @@ from maya.models import ImpactResult
 from maya.site import load_config
 from maya.timing import parse_date
 from maya.ui import review_queue
-from maya.ui.style import chip, esc, md
+from maya.ui.style import chip, empty_page, esc, md
 
 
 def money(value) -> str:
@@ -214,6 +214,8 @@ def _render_real(cfg: dict, as_of: date) -> None:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Proposed law", "What a proposed bill would do"):
+        return
     review_queue.keep_context()
     as_of = _as_of(cfg)
     real, illustrative = scenario.list_real_bills(cfg), scenario.list_bills(cfg)

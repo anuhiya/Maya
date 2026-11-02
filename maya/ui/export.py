@@ -8,6 +8,7 @@ from maya import export as csvs
 from maya import scenario
 from maya.site import load_config
 from maya.ui import view as v
+from maya.ui.style import empty_page
 
 
 def _scenario_text(cfg: dict, as_of) -> str:
@@ -21,6 +22,8 @@ def _scenario_text(cfg: dict, as_of) -> str:
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Export", "Download findings and employee impact"):
+        return
     conn = db.connect(cfg["_root"] / cfg["state"]["database"])
     try:
         view = v.load_view(cfg, conn)

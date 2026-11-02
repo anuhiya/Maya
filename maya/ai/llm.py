@@ -91,7 +91,7 @@ def _retry_after(err):
 class LLM:
     """Groq only, through the OpenAI-compatible API. Or a saved run, when the provider is replay."""
 
-    def __init__(self, *, cfg=None, env=None, secrets_path=SECRETS_PATH, client=None, run_name=None):
+    def __init__(self, *, cfg=None, env=None, secrets_path=SECRETS_PATH, client=None, run_name=None, player=None):
         cfg = cfg or load_config()
         self._env = os.environ if env is None else env
         self._secrets = _secrets(secrets_path)
@@ -106,7 +106,9 @@ class LLM:
         self.on_plan_retry = None  # called with (retry number, reason) before the planner is asked again
         self._client = client
         self._player = None
-        if self.provider == "replay":
+        if self.provider == "replay" and player is not None:
+            self._player = player  # recorded calls handed in directly, such as the agent's saved exchanges
+        elif self.provider == "replay":
             if not self.run_name:
                 raise MissingSettingError("MAYA_LLM_PROVIDER is replay but MAYA_REPLAY_RUN (the saved run name) is not set.")
             self._player = ReplayPlayer(self.run_name, self.replay_dir)
