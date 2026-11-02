@@ -1,8 +1,8 @@
-# Maya: plan
+# eDelta: plan
 
 Oct 29, 2026 (second revision). Pavan and Anu.
 
-Maya is an AI agent that watches payroll policy sources, finds what changed, works out who is affected and
+eDelta is an AI agent that watches payroll policy sources, finds what changed, works out who is affected and
 what it costs, approves clear changes by rule, and sends anything unclear to a reviewer, showing every step
 live. Jon's written brief is the core and is built first; Aditya's additions (agent, automatic intake, live
 view) sit on top, so the brief's features still work if the agent fails.
@@ -15,7 +15,7 @@ live-agent pattern and the "show me" finding layout.
 Every item must be visible in the app or the repo on Monday. Nothing outside `docs/requirements.md` gets
 built until every row works.
 
-| # | Requirement | How Maya meets it | Owner |
+| # | Requirement | How eDelta meets it | Owner |
 | --- | --- | --- | --- |
 | B1 | TXT or PDF in; find wage, tax, filing and reporting changes; substantive vs wording | Old and new file upload on the Agent page plus agent intake; the AI extracts facts and compares; code verifies every answer; TXT and PDF give identical results | Pavan |
 | B2 | Jurisdiction, category, previous and updated rule, effective date, excerpts; flag missing or ambiguous | Finding detail view with file and section cited, quoted date line, flags in plain English | Both |
@@ -69,16 +69,16 @@ failed CHECK. The run stops after 25 steps.
 
 **Run steps:** the model gets the goal ("find what changed since the approved version, who it affects,
 what it costs, who must decide") and the tool list, calls one tool at a time, reads each result, and ends
-with `finish`. A failed check gets one retry with the reason; a second failure sends the finding to the
+with `finish`. If Groq rejects the planner's tool call (HTTP 400) the call is retried once with a correction and a pause (and after a "Tool choice is required" refusal the run stays on tool choice "auto"); after two failed attempts in a step, code may choose the next step from the fixed order, at most six times per run (max_planner_fallbacks), and the log says "Planner fallback" and "Chosen by code, not the model". A failed check gets one retry with the reason; a second failure sends the finding to the
 reviewer with "AI answer failed its check."
 
 **Sources it watches:**
-- a fictional "Department of Labor" policy site for the three fictional jurisdictions in the config (trusted; the demo source,
+- a fictional "Department of Labor" policy site for the three jurisdictions in the config (real place names, synthetic rules) (trusted; the demo source,
   because the brief says fictional policies);
 - the company policy folder (trusted);
 - manual upload of an old and a new file on the Agent activity page (trusted, because the reviewer chose
   it); it moves to the Sources page if that stretch page is built;
-- the Federal Register API, free and keyless (informational only): the log shows Maya searching it once per
+- the Federal Register API, free and keyless (informational only): the log shows eDelta searching it once per
   run for new minimum wage and payroll rules; anything found goes to the reviewer as informational and
   never reaches employees or cost, because the brief's policies are fictional.
 - The US Department of Labor state minimum wage page is optional and off.
@@ -128,12 +128,12 @@ comment. A person can reverse it at any time, which adds a new history row.
 
 | Reason shown | Example |
 | --- | --- |
-| No effective date found | Calder annual earnings report, section 2.3 |
-| Effective date is unclear ("To be determined", 03/04/2027) | Meridian new hire reporting, section 3.3 |
-| New or changed wording that no value check covers | Avalon pay statements must now show hours at each rate, section 1.3 |
+| No effective date found | Los Angeles annual earnings report, section 2.3 |
+| Effective date is unclear ("To be determined", 03/04/2027) | Chicago new hire reporting, section 3.3 |
+| New or changed wording that no value check covers | New York City pay statements must now show hours at each rate, section 1.3 |
 | Two different amounts in one section | "$16.50 and $17.00" (not in our data; covered by a unit test) |
-| Section added or removed | Avalon wage notice at hire, section 1.4 |
-| Filing deadline or reporting change | Calder quarterly wage report, section 2.2 (always reviewed: the employer must change a process) |
+| Section added or removed | New York City wage notice at hire, section 1.4 |
+| Filing deadline or reporting change | Los Angeles quarterly wage report, section 2.2 (always reviewed: the employer must change a process) |
 | Source not trusted, an AI answer failed its check, or two runs disagree | Any |
 
 **Approval mode:**
@@ -207,7 +207,7 @@ salaried staff, hourly_wage = annual salary / 2080, for information only.
 `work_arrangement` is onsite, hybrid or remote. Onsite: the office is the work location. Remote: the home is
 the work location, so `jurisdiction` is the home and `office_location` may differ. Hybrid: `jurisdiction` is
 the primary work location and `secondary_jurisdiction` the other one (blank if both are the same). If an
-hourly hybrid employee's wage is below the new minimum of their `secondary_jurisdiction`, Maya does not guess
+hourly hybrid employee's wage is below the new minimum of their `secondary_jurisdiction`, eDelta does not guess
 the split of hours: the employee is listed under that change as "Needs review: works part of the week in
 <jurisdiction>" with an indicative upper bound (all hours at that minimum), never added to the totals.
 
@@ -252,7 +252,7 @@ the split of hours: the employee is listed under that change as "Needs review: w
 ## Extra X1: total cost panel and per-employee totals
 
 Built only after everything else works. It sits below the brief's required minimum wage figure (B4), which
-stays the headline. Anything Maya cannot calculate from the documents is flagged, not guessed.
+stays the headline. Anything eDelta cannot calculate from the documents is flagged, not guessed.
 
 | Line | How it is calculated | Status |
 | --- | --- | --- |
@@ -271,10 +271,10 @@ required columns stay as they are. The expected numbers come from `docs/expected
 ## Screens (B5, B6, B7, A4)
 
 One Streamlit app with a sidebar and five core pages: Agent activity, Review queue (finding detail beside
-the list), Employee impact, Review history and Export. The sixth, Sources, is stretch. The Maya design canvas is the visual
+the list), Employee impact, Review history and Export. The sixth, Sources, is stretch. The eDelta design canvas is the visual
 reference (`docs/design.md`); this list is what must actually work.
 
-**Sidebar (every page):** wordmark, page links, footer line. As-of date, reviewer name, approval mode and
+**Sidebar (every page):** eDelta logo, page links, footer line. As-of date, reviewer name, approval mode and
 the filters (jurisdiction, category, review status, timing) live on the Review queue; the Impact and Export
 pages show the active filters as chips. Filters drive the queue, the impact page and both exports.
 
@@ -458,7 +458,7 @@ written records. Jon opens the repo before the meeting.
 
 The README is short and written in your own words: concrete numbers, no buzzwords, no emojis.
 
-**README sections:** 1. What Maya does, in three sentences. 2. Setup and run (one install command, one run
+**README sections:** 1. What eDelta does, in three sentences. 2. Setup and run (one install command, one run
 command, one test command, how to get a free Groq key; without a key, the sample pair still runs from the
 saved run and the app says which setting is missing). 3. Architecture and one line per module. 4. How the
 agent works. 5. Routing. 6. Assumptions. 7. Validation cases and how to reproduce each. 8. Limitations.
@@ -476,10 +476,10 @@ agent works. 5. Routing. 6. Assumptions. 7. Validation cases and how to reproduc
 **Limitations to state (one-line answers ready):**
 - Built for numbered policy sections; long real regulations need a more flexible reader.
 - Scanned PDFs are not supported.
-- One level of jurisdiction: no city or county minimum wages, tipped wages or youth wages.
+- One level of jurisdiction: no other local or state minimums are modelled, and no tipped wages or youth wages.
 - Hybrid staff: the split of hours between two jurisdictions is not recorded, so a possible shortfall is sent to the reviewer instead of being priced.
 - Weekly overtime only; base wage treated as the regular rate; standard hours, not timecards.
-- A change that starts mid-week means that workweek is paid at two rates; Maya treats it as a full week.
+- A change that starts mid-week means that workweek is paid at two rates; eDelta treats it as a full week.
 - A change that took effect before the review date may mean back pay is owed; it is not calculated.
 - Raises for people just above the new minimum are not costed.
 - Salaried non-exempt staff and state exempt-salary thresholds are not modelled.
@@ -498,14 +498,14 @@ Present from the live app, both speaking, with at most one slide at the end. Reh
 
 | Minutes | Who | What to show |
 | --- | --- | --- |
-| 0 to 1 | Pavan | The problem in one sentence; what Maya does; the guardrails line |
+| 0 to 1 | Pavan | The problem in one sentence; what eDelta does; the guardrails line |
 | 1 to 3 | Pavan | Run the agent on PSB-2026-02: the log fills with PLAN, TOOL, AI, CHECK and RESULT lines; 9 findings |
-| 3 to 5 | Anu | Section 1.1 Avalon: excerpts, who is affected and why, the written math, $273.19 a week; open E001's overtime; show E071 (remote) |
-| 5 to 6 | Anu | Section 2.1 Calder in Future ($142.80), then switch the as-of date to 2027-01-01 and watch it move to Current |
+| 3 to 5 | Anu | Section 1.1 New York City: excerpts, who is affected and why, the written math, $273.19 a week; open E001's overtime; show E071 (remote) |
+| 5 to 6 | Anu | Section 2.1 Los Angeles in Future ($142.80), then switch the as-of date to 2027-01-01 and watch it move to Current |
 | 6 to 7 | Anu | Section 2.3 held for review (no date) and 3.2 as wording only; then the company policy no-change pair (6 of 6) |
 | 7 to 8 | Anu | Approve and dismiss with comments; restart the app; history is still there; download both CSVs |
-| 8 to 9 | Pavan | Live change: publish PSB-2026-03; the agent finds only the Meridian raise, 6 employees, $98.65 a week coming; one-click sign-off |
-| 9 to 10 | Both | Limitations, next steps, and one line: Rollcall stops bad payments in this run; Maya stops them in future runs as soon as a policy changes |
+| 8 to 9 | Pavan | Live change: publish PSB-2026-03; the agent finds only the Chicago raise, 6 employees, $98.65 a week coming; one-click sign-off |
+| 9 to 10 | Both | Limitations, next steps, and one line: Rollcall stops bad payments in this run; eDelta stops them in future runs as soon as a policy changes |
 
 **Backup:** if Groq fails or hits its limit live, the agent replays the saved run (labelled as a replay);
 the manual upload of the sample pair still works.

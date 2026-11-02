@@ -1,0 +1,22 @@
+{
+  "jurisdiction": "New York State",
+  "level": "state",
+  "enacted": false,
+  "covers": {
+    "text": "outside the city of New York and the counties of Nassau, Suffolk, and Westchester",
+    "quote": "in relation to the minimum wage outside of New York city and the counties of Nassau, Suffolk, and Westchester"
+  },
+  "applies_reason": "The company's employees work in New York City, Los Angeles and Chicago. None works in the area this bill covers.",
+  "rule": {
+    "title": "Minimum Wage",
+    "wage": "17.00",
+    "unit": "dollars per hour",
+    "effective_date": "January 1, 2026",
+    "quote": "$17.00 on and after January 1, 2026"
+  },
+  "bill_effective": {
+    "text": "The act takes effect immediately.",
+    "quote": "This act shall take effect immediately"
+  },
+  "covers_jurisdictions": []
+}

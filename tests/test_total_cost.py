@@ -90,7 +90,7 @@ def test_employee_rows_add_up_to_the_panel(data):
 def test_employee_rows_for_edge_cases(data):
     panel = cost.total_cost(pairs_at(data, date(2026, 11, 2)))
     by_id = {e.employee_id: e for e in panel.employees}
-    assert by_id["E001"].now == D("8.17") and "1.1 Avalon" in by_id["E001"].changes
+    assert by_id["E001"].now == D("8.17") and "1.1 New York City" in by_id["E001"].changes
     assert by_id["E025"].now == D("0.00") and by_id["E025"].coming == D("20.90")
     assert "2027-01-01" in by_id["E025"].coming_dates
     assert "E004" not in by_id  # exactly at the minimum

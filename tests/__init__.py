@@ -1,1 +1,1 @@
-"""Maya tests (B10)."""
+"""eDelta tests (B10)."""

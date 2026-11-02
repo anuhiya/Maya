@@ -104,7 +104,20 @@ class RunSummary(_Answer):
         return _not_blank(value)
 
 
+class ScenarioSummary(_Answer):
+    """scenario_summary: a short narrative about a proposed bill (A9). Code verifies every quote (V1)."""
+
+    summary: str
+    quotes: list[str] = Field(default_factory=list)  # sentences copied word for word from the bill
+
+    @field_validator("summary")
+    @classmethod
+    def _required_text(cls, value: str) -> str:
+        return _not_blank(value)
+
+
 SCHEMAS: dict[str, type[_Answer]] = {
+    "scenario_summary": ScenarioSummary,
     "read_section": ReadSection,
     "compare_section": CompareSection,
     "explain_finding": ExplainFinding,

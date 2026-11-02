@@ -1,6 +1,6 @@
-# Maya: project rules
+# eDelta: project rules
 
-Maya is a local Streamlit app for Jon's eDelta assignment (payroll regulatory change analysis). An AI agent
+eDelta is a local Streamlit app for Jon's eDelta assignment (payroll regulatory change analysis). An AI agent
 watches policy sources, finds what changed, works out who is affected and what it costs, approves clear
 changes by rule, sends anything unclear to a reviewer, and shows every step live.
 Team: Pavan and Anu, split 50/50 (see `docs/plan.md`, Work split). Demo: Mon Nov 2, 2026, 4:00 PM ET.

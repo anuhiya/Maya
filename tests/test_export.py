@@ -93,4 +93,4 @@ def test_no_rows_gives_headers_only(data):
 
 
 def test_file_name_has_as_of_date():
-    assert export.file_name("findings", date(2026, 11, 2)) == "maya_findings_2026-11-02.csv"
+    assert export.file_name("findings", date(2026, 11, 2)) == "edelta_findings_2026-11-02.csv"

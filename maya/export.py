@@ -65,4 +65,4 @@ def employee_totals_csv(employees: list) -> str:
 
 
 def file_name(kind: str, as_of: date) -> str:
-    return f"maya_{kind}_{as_of.isoformat()}.csv"
+    return f"edelta_{kind}_{as_of.isoformat()}.csv"

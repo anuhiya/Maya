@@ -9,7 +9,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONT_DIR = "/usr/share/fonts/truetype/dejavu/"
 
 MW = "Every employer shall pay each covered employee a wage of not less than {} per hour for all hours worked."
-UI = "Every employer shall contribute {} of each covered employee's taxable wages to the Avalon Unemployment Insurance Fund."
+UI = "Every employer shall contribute {} of each covered employee's taxable wages to the New York City Unemployment Insurance Fund."
 PS1 = "Every employer shall furnish each employee, on every regular payday, a written or electronic pay statement showing gross wages, all deductions and net wages."
 PS2 = "Every employer shall furnish each employee, on every regular payday, a written or electronic pay statement showing gross wages, all deductions, net wages and the hours worked at each rate of pay."
 WN = "Every employer shall give each newly hired employee, on the first day of work, a written notice stating the employee's hourly rate of pay and regular payday."
@@ -23,19 +23,19 @@ J1, J26, J27, N26 = "January 1, 2026", "January 1, 2026", "January 1, 2027", "No
 
 def gov_sections(v):
     s = [
-        ("1.1", "Minimum Wage", "Avalon", J26 if v == 1 else N26, MW.format("$16.00" if v == 1 else "$17.25")),
-        ("1.2", "Unemployment Insurance Contribution Rate", "Avalon", J26 if v == 1 else J27, UI.format("2.7%" if v == 1 else "3.1%")),
-        ("1.3", "Pay Statements", "Avalon", J26 if v == 1 else J27, PS1 if v == 1 else PS2),
+        ("1.1", "Minimum Wage", "New York City", J26 if v == 1 else N26, MW.format("$16.00" if v == 1 else "$17.25")),
+        ("1.2", "Unemployment Insurance Contribution Rate", "New York City", J26 if v == 1 else J27, UI.format("2.7%" if v == 1 else "3.1%")),
+        ("1.3", "Pay Statements", "New York City", J26 if v == 1 else J27, PS1 if v == 1 else PS2),
     ]
     if v >= 2:
-        s.append(("1.4", "Wage Notice at Hire", "Avalon", J27, WN))
+        s.append(("1.4", "Wage Notice at Hire", "New York City", J27, WN))
     s += [
-        ("2.1", "Minimum Wage", "Calder", J26 if v == 1 else J27, MW.format("$14.50" if v == 1 else "$15.50")),
-        ("2.2", "Quarterly Wage Report Filing", "Calder", J26 if v == 1 else J27, QR.format("30" if v == 1 else "20")),
-        ("2.3", "Annual Earnings Report", "Calder", J26 if v == 1 else None, AE.format("once" if v == 1 else "twice")),
-        ("3.1", "Minimum Wage", "Meridian", J26 if v < 3 else J27, MW.format("$13.75" if v < 3 else "$15.00")),
-        ("3.2", "Overtime Pay", "Meridian", J26, OT1 if v == 1 else OT2),
-        ("3.3", "New Hire Reporting", "Meridian", J26 if v == 1 else "To be determined", NH.format("20" if v == 1 else "10")),
+        ("2.1", "Minimum Wage", "Los Angeles", J26 if v == 1 else J27, MW.format("$14.50" if v == 1 else "$15.50")),
+        ("2.2", "Quarterly Wage Report Filing", "Los Angeles", J26 if v == 1 else J27, QR.format("30" if v == 1 else "20")),
+        ("2.3", "Annual Earnings Report", "Los Angeles", J26 if v == 1 else None, AE.format("once" if v == 1 else "twice")),
+        ("3.1", "Minimum Wage", "Chicago", J26 if v < 3 else J27, MW.format("$13.75" if v < 3 else "$15.00")),
+        ("3.2", "Overtime Pay", "Chicago", J26, OT1 if v == 1 else OT2),
+        ("3.3", "New Hire Reporting", "Chicago", J26 if v == 1 else "To be determined", NH.format("20" if v == 1 else "10")),
     ]
     return s
 
@@ -53,20 +53,20 @@ def gov_front(v):
         ("sub", "100 Commonwealth Plaza, Harbor City"),
         ("gap", ""),
         ("title", f"PAYROLL STANDARDS BULLETIN {no}"),
-        ("subtitle", "Payroll Rules for Employers in Avalon, Calder and Meridian"),
+        ("subtitle", "Payroll Rules for Employers in New York City, Los Angeles and Chicago"),
         ("gap", ""),
         ("meta", f"Bulletin number: {no}"),
         ("meta", f"Issued: {issued}"),
         ("meta", f"Supersedes: {sup}"),
         ("meta", "Authority: Regional Wage and Payroll Standards Act, Title IV"),
-        ("meta", "Applies to: every employer with employees whose work location is in Avalon, Calder or Meridian"),
+        ("meta", "Applies to: every employer with employees whose work location is in New York City, Los Angeles or Chicago"),
         ("meta", "Approved by: Director, Division of Wage and Payroll Standards"),
         ("meta", "Employer helpline: 555-0142, weekdays 8:30 AM to 5:00 PM"),
         ("gap", ""),
-        ("notice", "NOTICE: This is a synthetic document created for a software prototype. The Regional Department of Labor, the Act and the jurisdictions named here are fictional. It is not a real law, regulation or legal advice."),
+        ("notice", "NOTICE: Synthetic bulletin. Place names are real; wage rates, rules and dates are illustrative, not the actual law. This document was created for a software prototype. The Regional Department of Labor and the Act are fictional. It is not a real law, regulation or legal advice."),
         ("gap", ""),
         ("head", "PURPOSE AND USE"),
-        ("para", "This bulletin states the payroll rules in force for each jurisdiction. Rules for Avalon appear in sections numbered 1, rules for Calder in sections numbered 2 and rules for Meridian in sections numbered 3. Each rule takes effect on the effective date shown with it. Where a rule shows no effective date, or a date that is not yet set, employers should contact the Division before changing payroll."),
+        ("para", "This bulletin states the payroll rules in force for each jurisdiction. Rules for New York City appear in sections numbered 1, rules for Los Angeles in sections numbered 2 and rules for Chicago in sections numbered 3. Each rule takes effect on the effective date shown with it. Where a rule shows no effective date, or a date that is not yet set, employers should contact the Division before changing payroll."),
         ("gap", ""),
         ("head", "WORK LOCATION"),
         ("para", "Each rule applies according to the jurisdiction where the work is performed, not where the employer's office is or where the employee lives. For an employee who works from home, the home is the work location. For an employee who works in more than one jurisdiction in the same workweek, the employer shall pay each hour worked at no less than the minimum wage of the jurisdiction where that hour is worked."),
@@ -75,12 +75,12 @@ def gov_front(v):
     ]
 
 COMPANY_SECTIONS = [
-    ("1.1", "Pay Schedule", "Avalon", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
-    ("1.2", "Overtime Approval", "Avalon", J26, "Hourly employees must obtain written approval from their manager before working more than 40 hours in a workweek."),
-    ("2.1", "Pay Schedule", "Calder", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
-    ("2.2", "Timekeeping", "Calder", J26, "Hourly employees must record their start and end times in the company time system on every working day."),
-    ("3.1", "Pay Schedule", "Meridian", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
-    ("3.2", "Contractor Payments", "Meridian", J26, "The company shall pay each independent contractor within 30 calendar days after receiving an approved invoice."),
+    ("1.1", "Pay Schedule", "New York City", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
+    ("1.2", "Overtime Approval", "New York City", J26, "Hourly employees must obtain written approval from their manager before working more than 40 hours in a workweek."),
+    ("2.1", "Pay Schedule", "Los Angeles", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
+    ("2.2", "Timekeeping", "Los Angeles", J26, "Hourly employees must record their start and end times in the company time system on every working day."),
+    ("3.1", "Pay Schedule", "Chicago", J26, "The company shall pay each employee on the weekly, biweekly or semimonthly schedule stated in the employee's offer letter."),
+    ("3.2", "Contractor Payments", "Chicago", J26, "The company shall pay each independent contractor within 30 calendar days after receiving an approved invoice."),
 ]
 
 COMPANY_FRONT = [
@@ -95,9 +95,9 @@ COMPANY_FRONT = [
     ("meta", "Approved by: Chief Financial Officer"),
     ("meta", "Last reviewed: October 1, 2026"),
     ("meta", "Next review: April 1, 2027"),
-    ("meta", "Applies to: all employees and contractors at company locations in Avalon, Calder and Meridian"),
+    ("meta", "Applies to: all employees and contractors at company locations in New York City, Los Angeles and Chicago"),
     ("gap", ""),
-    ("notice", "NOTICE: This is a synthetic document created for a software prototype. Larkspur Supply Co. is a fictional company."),
+    ("notice", "NOTICE: Synthetic policy. Place names are real; pay rules and dates are illustrative, not the actual law. This is a synthetic document created for a software prototype. Larkspur Supply Co. is a fictional company."),
     ("gap", ""),
     ("head", "PURPOSE AND USE"),
     ("para", "This policy sets the company's own pay practices at each location. Where this policy and the law differ, the law applies. Questions go to the Payroll Manager."),

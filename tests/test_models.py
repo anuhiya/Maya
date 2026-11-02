@@ -69,7 +69,7 @@ def test_every_employee_row_parses():
 
 def test_blank_optional_cells_become_none():
     emp = Employee(
-        employee_id="X1", jurisdiction="Avalon", hourly_wage="15.00",
+        employee_id="X1", jurisdiction="New York City", hourly_wage="15.00",
         weekly_hours="40", employment_type="hourly_full_time",
         annual_salary="", secondary_jurisdiction="", overtime_eligible="yes",
     )
@@ -81,7 +81,7 @@ def test_blank_optional_cells_become_none():
 def test_employee_rejects_non_positive_wage():
     with pytest.raises(ValidationError):
         Employee(
-            employee_id="X1", jurisdiction="Avalon", hourly_wage="0",
+            employee_id="X1", jurisdiction="New York City", hourly_wage="0",
             weekly_hours="40", employment_type="contractor",
         )
 

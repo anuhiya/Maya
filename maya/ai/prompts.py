@@ -103,3 +103,16 @@ def run_summary(facts):
         "dates, and never say anything is approved: findings wait for a person. Answer with JSON only."
     )
     return system, "Facts:\n" + "\n".join(f"{key}: {value}" for key, value in facts.items())
+
+
+def scenario_summary(bill_text, facts):
+    """Prompt for scenario_summary: what the bill would do and what to prepare. Returns (system, user)."""
+    system = (
+        "You summarize one proposed bill for a payroll reviewer in three to five plain sentences: what it "
+        "changes, who it covers, when it would start, and what happens if it does not pass. The bill is not "
+        "law. Use only the bill text and the facts given and copy every number exactly. Do not calculate and "
+        "do not add numbers. Put up to three sentences copied word for word from the bill in \"quotes\". "
+        "Never say anything is approved. Answer with JSON only."
+    )
+    lines = "\n".join(f"{key}: {value}" for key, value in facts.items())
+    return system, f"Bill:\n{bill_text}\n\nFacts calculated by code:\n{lines}"

@@ -74,7 +74,7 @@ def spread_tax(amounts: dict[str, Decimal]) -> dict[str, Decimal]:
 
 @dataclass(frozen=True)
 class CostLine:
-    """One panel line. weekly and yearly are None when Maya cannot calculate it."""
+    """One panel line. weekly and yearly are None when eDelta cannot calculate it."""
 
     label: str
     weekly: Decimal | None

@@ -16,3 +16,8 @@ dist/
 
 # Manual uploads
 data/uploads/
+data/policy_site/_fetched/
+
+# macOS
+.DS_Store
+maya.empty

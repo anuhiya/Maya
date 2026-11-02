@@ -1,4 +1,4 @@
-# Maya: requirements (source of truth)
+# eDelta: requirements (source of truth)
 
 Revised Oct 29, 2026 (second revision, official repo). Every feature, design choice and line of code must
 trace to an ID below. If anything in `docs/plan.md` disagrees with this file, this file wins, and Jon's
@@ -39,13 +39,18 @@ changes, and assesses which employees may be affected using a synthetic employee
 | A2 | Jon wants an AI agent, not a manual tool: it should search the web and government or official sites for new policies, take them in and process them automatically. |
 | A3 | Automate definitive changes (a clear $15.00 to $15.50); keep a person in the loop for anything unclear, flagged or needing approval. |
 | A4 | Jon likes to see what is happening in the background while it happens: a live view of the agent's steps, as in Rollcall.ai (https://rollcall-use-cases.vercel.app/). Rollcall's rule: "Rules calculate the dollars. AI identifies, explains and groups. A reviewer decides." |
+| A6 | From Aditya's review (decision of Nov 1, 2026): the whole app uses the eDelta look: a dark navy theme and the eDelta logo from `assets/edelta-logo.png` (about 120px wide in the sidebar, and no logo in page headers, the circular "e" mark as the browser tab icon), instead of the Terracotta & Paper palette and the "maya." wordmark. Status colours stay readable and every status keeps its word. Supersedes the palette and wordmark parts of P2. |
+| A5 | Interactive agent view: pipeline diagram, a right-hand Live AI work panel, step controls, and a collapsed Audit log; the full log is still saved to `agent_runs`. |
+| A8 | Read-only MCP server (optional): findings, employee impact, cost, proposed scenarios and review history for Claude Desktop; no approve or write tool. |
+| A9 | Proposed bill impact analysis: if enacted, if not enacted, AI narrative labelled and V1 verified; scenario totals never added to in-effect or coming totals. |
+| A7 | Dropped by Pavan on Nov 1, 2026 (SOC). Not built. |
 
 ## P. Team requirements
 
 | ID | Requirement |
 | --- | --- |
 | P1 | No em dashes anywhere: UI text, code comments, docs, commit messages, README. No emojis in the UI or README. |
-| P2 | Not a generic template look. Use the chosen design: Terracotta & Paper palette, Fraunces / Instrument Sans / IBM Plex Mono, "maya." wordmark, queue-and-detail layout (see `docs/design.md`). |
+| P2 | Not a generic template look. Use the chosen design: Terracotta & Paper palette, Fraunces / Instrument Sans / IBM Plex Mono, "maya." wordmark, queue-and-detail layout (see `docs/design.md`). Palette and wordmark superseded by A6. |
 | P3 | The agent genuinely uses AI (no code-only shortcuts presented as AI), on the Groq free tier only. No other model provider. |
 | P4 | Work like a real team: branch per change, pull requests reviewed by the other person, tagged versions, CHANGELOG, short decision records, a worklog. |
 | P5 | Split work 50/50 so each person owns a meaningful part. The commit history must honestly show who did what (pairing credited with `Co-authored-by:`, never reassigned later). The README's contributions section must be accurate. |

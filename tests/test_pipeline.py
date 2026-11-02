@@ -18,7 +18,7 @@ CFG = load_config()
 JURISDICTIONS = CFG["jurisdictions"]
 MAIN = CFG["policies"]["main_pair"]
 COMPANY = CFG["policies"]["company_pair"]
-OLD_DOC = "1.1 Minimum Wage\nJurisdiction: Avalon\nEffective Date: January 1, 2026\n" \
+OLD_DOC = "1.1 Minimum Wage\nJurisdiction: New York City\nEffective Date: January 1, 2026\n" \
           "Every employer shall pay each covered employee a wage of not less than $16.00 per hour for all hours worked.\n"
 NEW_DOC = OLD_DOC.replace("$16.00", "$17.25").replace("January 1, 2026", "November 1, 2026")
 
@@ -55,7 +55,7 @@ def facts(user, value=None):
     value = value or ("16.00" if old else "17.25")
     date = "January 1, 2026" if old else "November 1, 2026"
     return json.dumps({
-        "section": "1.1", "title": "Minimum Wage", "jurisdiction": "Avalon", "effective_date": date,
+        "section": "1.1", "title": "Minimum Wage", "jurisdiction": "New York City", "effective_date": date,
         "value": value, "unit": "dollars per hour", "day_type": None, "obligation": "shall",
         "category": "wages", "date_quote": f"Effective Date: {date}",
         "rule_quote": f"Every employer shall pay each covered employee a wage of not less than ${value} per hour for all hours worked.",

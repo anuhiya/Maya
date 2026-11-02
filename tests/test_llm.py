@@ -180,3 +180,109 @@ def test_rate_limit_wait_is_reported_before_sleeping(cfg, tmp_path, monkeypatch)
     llm.on_wait = waits.append
     ask(llm)
     assert waits == [7.0]
+
+
+# ---- planner retries on Groq's tool-call 400 (A2) ----------------------------------------------------
+
+TOOLS = [{"type": "function", "function": {"name": "finish", "parameters": {"type": "object", "properties": {}}}}]
+MESSAGES = [{"role": "user", "content": "go"}]
+BAD_TOOL = ("Error code: 400 - Tool call validation failed: attempted to call tool 'json' "
+            "which was not in request.tools")
+
+
+class BadToolCall(Exception):
+    status_code = 400
+
+
+def tool_reply(name="finish"):
+    call = SimpleNamespace(function=SimpleNamespace(name=name, arguments=json.dumps({"plan": "end"})))
+    return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(tool_calls=[call], content=None))])
+
+
+class PlanClient(FakeClient):
+    def _create(self, **kwargs):
+        self.calls.append(kwargs)
+        item = self.replies.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+def plan_llm(cfg, tmp_path, monkeypatch, *replies):
+    sleeps = []
+    monkeypatch.setattr("maya.ai.llm.time.sleep", sleeps.append)
+    client = PlanClient(*replies)
+    return make(cfg, tmp_path, client), client, sleeps
+
+
+def test_planner_400_once_is_retried_with_a_correction_and_backoff(cfg, tmp_path, monkeypatch):
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall(BAD_TOOL), tool_reply())
+    seen = []
+    llm.on_plan_retry = lambda n, why: seen.append(n)
+    answer = llm.plan(MESSAGES, TOOLS).answer
+    assert answer["name"] == "finish" and len(client.calls) == 2 and seen == [1] and sleeps == [1]
+    assert client.calls[1]["messages"][-1] == {"role": "system", "content": "Call only one of the listed tools by its exact name."}
+    assert client.calls[0]["tool_choice"] == "required" and client.calls[1]["tool_choice"] == "auto"
+
+
+def test_planner_gives_up_after_two_failed_attempts_in_a_step(cfg, tmp_path, monkeypatch):
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall(BAD_TOOL),
+                                   BadToolCall("'to=finish<|channel|>commentary' not in request.tools"))
+    with pytest.raises(LLMError, match="not in request.tools"):
+        llm.plan(MESSAGES, TOOLS)
+    assert len(client.calls) == 2 and sleeps == [1]  # no third ask, no pause after the last failure
+
+
+REQUIRED = "Error code: 400 - Tool choice is required, but model did not call a tool"
+
+
+def test_tool_choice_required_refusal_makes_auto_sticky_for_the_rest_of_the_run(cfg, tmp_path, monkeypatch):
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall(REQUIRED), tool_reply("finish"),
+                                   tool_reply("finish"), tool_reply("finish"))
+    llm.plan(MESSAGES, TOOLS)
+    llm.plan(MESSAGES, TOOLS)  # a later step never asks for "required" again
+    llm.plan(MESSAGES, TOOLS)
+    assert [c["tool_choice"] for c in client.calls] == ["required", "auto", "auto", "auto"]
+
+
+def test_a_different_400_does_not_make_auto_sticky(cfg, tmp_path, monkeypatch):
+    llm, client, _ = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall(BAD_TOOL), tool_reply("finish"), tool_reply("finish"))
+    llm.plan(MESSAGES, TOOLS)
+    llm.plan(MESSAGES, TOOLS)
+    assert [c["tool_choice"] for c in client.calls] == ["required", "auto", "required"]
+
+
+def test_the_tool_choice_400_is_never_treated_as_a_rate_limit(cfg, tmp_path, monkeypatch):
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall(REQUIRED), BadToolCall(REQUIRED))
+    waits = []
+    llm.on_wait = waits.append
+    with pytest.raises(LLMError):
+        llm.plan(MESSAGES, TOOLS)
+    assert waits == [] and sleeps == [1]  # only the planner's own pause; no rate-limit wait
+
+
+def test_a_tokens_per_minute_message_waits_even_without_a_429(cfg, tmp_path, monkeypatch):
+    class Tpm(Exception):
+        status_code = 413
+
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch,
+                                   Tpm("Rate limit reached on tokens per minute (TPM). Please try again in 3s."), tool_reply())
+    llm.plan(MESSAGES, TOOLS)
+    assert sleeps == [3.0]
+
+
+def test_other_400_errors_are_not_retried(cfg, tmp_path, monkeypatch):
+    llm, client, _ = plan_llm(cfg, tmp_path, monkeypatch, BadToolCall("invalid api key"))
+    with pytest.raises(LLMError):
+        llm.plan(MESSAGES, TOOLS)
+    assert len(client.calls) == 1
+
+
+def test_token_per_minute_reply_waits_the_time_it_names(cfg, tmp_path, monkeypatch):
+    class Tpm(Exception):
+        status_code = 429
+
+    llm, client, sleeps = plan_llm(cfg, tmp_path, monkeypatch,
+                                   Tpm("Rate limit reached. Please try again in 1m2.5s."), tool_reply())
+    llm.plan(MESSAGES, TOOLS)
+    assert sleeps == [62.5]

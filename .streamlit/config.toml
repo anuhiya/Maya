@@ -1,27 +1,27 @@
-# Terracotta & Paper theme (P2, docs/design.md). Only keys supported by Streamlit 1.66.1.
+# Dark navy theme (P2 as changed by A6, palette of Nov 1 evening, docs/design.md). Only keys supported by Streamlit 1.66.1.
 [client]
 toolbarMode = "minimal"
 
 [theme]
-base = "light"
-primaryColor = "#B5472A"
-backgroundColor = "#F3EEE6"
-secondaryBackgroundColor = "#FFFCF7"
-textColor = "#23201C"
-borderColor = "#E5DCCD"
-greenColor = "#3D6640"
-greenBackgroundColor = "#E4EEDF"
-orangeColor = "#8A5A0F"
-orangeBackgroundColor = "#F6E7C4"
-blueColor = "#34557A"
-blueBackgroundColor = "#DDE6F0"
-redColor = "#A23A2C"
-redBackgroundColor = "#F5DCD6"
-font = "Instrument Sans:https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap, sans-serif"
-headingFont = "Fraunces:https://fonts.googleapis.com/css2?family=Fraunces:wght@600&display=swap, serif"
+base = "dark"
+primaryColor = "#66B3FF"
+backgroundColor = "#07081F"
+secondaryBackgroundColor = "#0B0D33"
+textColor = "#F3F5F9"
+borderColor = "#1A2A5C"
+greenColor = "#4ADE9A"
+greenBackgroundColor = "#0B2E24"
+orangeColor = "#F5B94A"
+orangeBackgroundColor = "#33260A"
+blueColor = "#66B3FF"
+blueBackgroundColor = "#0F1E80"
+redColor = "#FF6B6B"
+redBackgroundColor = "#3A1218"
+font = "Asta Sans:https://fonts.googleapis.com/css2?family=Asta+Sans:wght@400;500;600&display=swap, sans-serif"
+headingFont = "Montserrat:https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&display=swap, sans-serif"
 codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap, monospace"
 headingFontWeights = 600
 
 [theme.sidebar]
-backgroundColor = "#F3EEE6"
-secondaryBackgroundColor = "#FFFCF7"
+backgroundColor = "#07081F"
+secondaryBackgroundColor = "#0B0D33"

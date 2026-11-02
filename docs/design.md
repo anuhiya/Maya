@@ -1,6 +1,8 @@
-# Maya: design (P2)
+# eDelta: design (P2, changed by A6)
 
-Visual reference: the Maya canvas (claude.ai artifact, pages Agent, Review queue, Employee impact,
+The app was called Maya during early development and is now eDelta (A6).
+
+Visual reference: the eDelta canvas (claude.ai artifact, pages Agent, Review queue, Employee impact,
 Review history, Export, Sources). Take screenshots of it and drop them into Claude Code when building
 each page. This file is the part Claude Code must follow exactly.
 
@@ -13,37 +15,46 @@ each page. This file is the part Claude Code must follow exactly.
 - Contrast meets WCAG: 4.5:1 for text, 3:1 for controls. Colour is never the only signal: every status
   also has a word.
 
-## Palette: Terracotta & Paper
+## Palette: Dark navy (A6, tokens of Nov 1 evening)
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| bg | #F3EEE6 | page background |
-| surface | #FFFCF7 | cards, panels |
-| ink | #23201C | main text |
-| muted | #6B6259 | secondary text |
-| line | #E5DCCD | borders, dividers |
-| accent | #B5472A | primary button, wordmark full stop, selected item |
-| good / good-bg | #3D6640 / #E4EEDF | approved, passed checks |
-| review / review-bg | #8A5A0F / #F6E7C4 | needs review, flags |
-| future / future-bg | #34557A / #DDE6F0 | future-dated changes |
-| critical / critical-bg | #A23A2C / #F5DCD6 | errors, removed text |
-| sidebar footer text | #5C544A | small text on bg (passes contrast) |
+| bg | #07081F | page and sidebar background; the logo sits directly on it |
+| panel | #0B0D33 | cards, panels, tables, with a 1px border rgba(102,179,255,0.20) |
+| ink | #F3F5F9 | main text |
+| muted | #9AA3C7 | secondary text, table headers, footers |
+| accent | #66B3FF | links, selected item, primary button fill (dark text #07081F), outlined secondary buttons |
+| deep blue | #0F1E80, #001174 | selected rows, future-dated chips, gradients |
+| good | #4ADE9A on #0B2E24 | approved, passed checks, added text |
+| warn | #F5B94A on #33260A | needs review, flags |
+| bad | #FF6B6B on #3A1218 | errors, removed text |
+
+Shapes: cards 16px radius, buttons pill (72px), chips fully rounded. Primary button is a blue fill with dark
+text, secondary is outlined blue. Table headers are short muted capitals; label-value tables have a fixed 160px
+no-wrap label column; no table breaks words mid-word. The kicker is small capitals with a blue chevron.
+Every text and background pair in the CSS must reach 4.5:1 (tested in `tests/test_branding.py`).
+Colour is never the only signal: Added and Removed are words in the queue and in the excerpt labels, removed
+words are struck through and added words are highlighted.
 
 ## Type
 
-- Headings: Fraunces (600), slight negative letter spacing.
+- Page titles, section headings and big numbers: Montserrat (600). Body: Asta Sans. IDs, quotes and evidence: IBM Plex Mono.
+  The sidebar shows the product name "Maya" under the logo. Tab title "eDelta Maya".
 - Body and controls: Instrument Sans (400, 500, 600).
 - Numbers, money, IDs, dates, excerpts: IBM Plex Mono.
 - All from Google Fonts.
 
 ## Logo
 
-Lowercase wordmark "maya." in Fraunces 600 with the full stop in the accent colour. No icon. Browser tab:
-the accent full stop or a lowercase "m".
+The eDelta logo, `assets/edelta-logo.png` (an unchanged copy of `assets/image.png`, kept). It is light on dark, so
+it goes straight on the page background, never on a white panel. Shown about 120px wide in the sidebar only (above the page
+links), aspect ratio kept. No logo or wordmark in page headers. Never recolour, crop or redraw
+it. Browser tab: `assets/edelta-icon.png`, the circular "e" mark cut from the logo without changing its pixels. If
+a file is missing, the app falls back to the text "eDelta" with "Delta" in the accent colour and a plain tab icon.
 
 ## Layout
 
-- Left sidebar: wordmark, page links (Agent activity, Review queue, Employee impact, Review history,
+- Left sidebar: logo, page links (Agent activity, Review queue, Employee impact, Proposed law, Review history,
   Export, and Sources once that stretch page is built), footer line "Synthetic, illustrative data. AI reads and judges; code checks and
   calculates; a person decides anything unclear."
 - Top bar on the queue: policy pair, as-of date toggle (2026-11-02 / 2027-01-01), approval mode
@@ -78,3 +89,50 @@ the accent full stop or a lowercase "m".
   version supports them; inject the rest with one CSS block in `maya/ui/style.py`. Check the installed
   version's theming options first instead of guessing.
 - Keep custom CSS small and in one place. No emojis in the UI. No em dashes in any copy.
+
+## Decision record: dark navy theme and eDelta logo (A6)
+
+- **Context:** The brief (P2) chose Terracotta & Paper and a "maya." wordmark. In Aditya's review, the eDelta
+  look was requested for the whole app, and the supplied logo has white lettering that cannot sit on a light page.
+- **Decision (Nov 1, 2026):** The whole app uses a dark navy theme and the eDelta logo. A6 supersedes the palette and
+  wordmark parts of P2; fonts, layout and copy rules stay. The SOC item (A7) was dropped and is not built.
+- **Alternatives:** A navy sidebar and header only (a split look and two palettes to keep readable); keeping the light
+  theme on a navy backing panel for the logo (a panel behind the logo, which the logo is not meant for).
+- **Consequences:** Every colour token moved, and status colours became light text on dark tints, checked for
+  4.5:1 contrast in a test. The sidebar uses hidden navigation with page links so the logo sits first.
+  README and any screenshots still show the old look until they are updated.
+
+## Decision record: palette of Nov 1 evening (A6)
+
+- **Context:** The first navy tokens (#0A1530 and friends) were a stand-in.
+- **Decision:** Pavan's tokens replace them: bg #07081F, panel #0B0D33, accent #66B3FF, status colours #4ADE9A,
+  #F5B94A and #FF6B6B, fonts Montserrat, Asta Sans and IBM Plex Mono. Footer on every page: "eDelta Maya. Prototype
+  built for eDelta Consulting. Synthetic, illustrative data." Tab title "eDelta Maya".
+- **Alternatives:** Keeping the first tokens (rejected: they did not match the eDelta site look).
+- **Consequences:** Only styling changed. Every number and calculation is untouched. The contrast test covers the new pairs.
+
+## Decision record: real place names on synthetic data (Nov 1, 2026)
+
+- **Context:** The three jurisdictions were fictional (Avalon, Calder, Meridian). The demo reads better with real places.
+- **Decision:** Real place names on synthetic data; Jon's brief requires fictional policy and a synthetic dataset.
+  Avalon is now New York City, Calder is Los Angeles and Meridian is Chicago. Names only changed: every wage rate, rule, date and
+  employee is still synthetic and illustrative. Every bulletin header, the policy site, the Sources page and the footer say so:
+  "Synthetic bulletin. Place names are real; wage rates, rules and dates are illustrative, not the actual law."
+- **Alternatives:** Keeping the fictional names (rejected: less recognisable in the demo); real rates and rules (rejected: the brief
+  requires a synthetic dataset and invented policy).
+- **Consequences:** Every policy file, the employee CSV, the saved replays and the tests were rewritten with one name mapping,
+  and every sha256 fingerprint and replay prompt hash was recomputed. No calculation and no frozen number changed.
+
+## Decision record: real proposed bills, informational only (A9)
+
+- **Context:** The Proposed law page showed one illustrative bill. Jon's brief wants real policy to be read, but never applied as if it were law.
+- **Decision:** The page has a selector, "Real proposed bills" and "Illustrative bill". A real bill is kept in
+  `data/policies/proposed/real/<bill>/` as the official file saved unaltered, a text file extracted from it with no edits, a
+  `header.json` (number, title, sponsor, official URL, date retrieved, status at retrieval, trust "informational only") and a
+  `facts.json` whose every fact carries a quote that code checks word for word against the saved text (V1). Only official pages
+  are used (the New York City Council Legistar site and nysenate.gov). A bill that does not cover this company shows "Not applicable
+  to this company, covers: ..." and no cost. The page always says: "Bill text is real; the workforce is synthetic; status may have
+  changed since retrieval."
+- **Alternatives:** Pricing every bill whatever its scope (rejected: it would guess); using news or tracker sites (rejected: not official).
+- **Consequences:** Real-bill totals are separate and never added to the in-effect or coming totals. Facts are read once by a person and
+  verified by code, not read live by the AI; the AI summary button is optional and its quotes are verified too.

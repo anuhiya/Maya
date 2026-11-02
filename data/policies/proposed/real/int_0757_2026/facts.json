@@ -1,0 +1,38 @@
+{
+  "jurisdiction": "New York City",
+  "level": "city",
+  "enacted": false,
+  "covers": {
+    "text": "employers in New York City, except federal, state and city or local government employers",
+    "quote": "but not including (i) the United States government"
+  },
+  "applies_reason": "The data holds 80 employees, so Schedule 2 (500 or fewer employees nationwide) is used. This assumes the company has 500 or fewer employees nationwide, which the data cannot show.",
+  "schedule": {
+    "name": "Schedule 2",
+    "who": "employers that employ 500 or fewer employees nationwide",
+    "quote": "any employer that employs 500 or fewer employees nationwide",
+    "other_schedule_quote": "any employer that employs more than 500 employees nationwide"
+  },
+  "rule": {
+    "title": "Minimum Wage",
+    "section": "20-1703 b",
+    "wage": "19.00",
+    "unit": "dollars per hour",
+    "effective_date": "January 1, 2027",
+    "quote": "On or after January 1, 2027, $19 an hour;"
+  },
+  "bill_effective": {
+    "text": "The local law takes effect 180 days after it becomes law.",
+    "quote": "This local law takes effect 180 days after it becomes law."
+  },
+  "not_priced": [
+    "Later wage steps from 2028 to 2031 are not priced.",
+    "Food service workers who receive tips may be paid at least two-thirds of the minimum wage in cash. The data has no tip information, so they are priced at the full minimum (an upper bound)."
+  ],
+  "not_priced_quotes": [
+    "the minimum wage for an employee who is a food service worker receiving tips shall be (1) a minimum wage of at least two-thirds of the applicable minimum wage"
+  ],
+  "covers_jurisdictions": [
+    "New York City"
+  ]
+}

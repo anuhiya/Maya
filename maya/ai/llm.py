@@ -3,6 +3,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import time
 import tomllib
 from dataclasses import dataclass, field
@@ -20,7 +21,12 @@ TIMEOUT_SECONDS = 60
 REASONING_EFFORT = "low"
 RATE_LIMIT_RETRIES = 3
 RATE_LIMIT_DEFAULT_WAIT = 10
-RETRYABLE_PLAN_ERRORS = ("did not call a tool", "Parsing failed")
+RETRYABLE_PLAN_ERRORS = ("did not call a tool", "Parsing failed", "Tool call validation failed",
+                         "not in request.tools", "attempted to call tool", "tool_use_failed")
+PLAN_RETRIES = 1  # one extra planner ask: after two failed attempts in a step, code chooses the step
+PLAN_BACKOFF_SECONDS = 1  # doubled on each retry
+TOOL_CHOICE_REQUIRED_ERROR = "Tool choice is required"
+PLAN_CORRECTION = "Call only one of the listed tools by its exact name."
 SECRETS_PATH = ROOT / ".streamlit" / "secrets.toml"
 
 log = logging.getLogger("maya.ai.llm")
@@ -62,18 +68,30 @@ def _secrets(path):
         return {}
 
 
+_TRY_AGAIN = re.compile(r"try again in (?:(\d+)m)?(\d+(?:\.\d+)?)s", re.IGNORECASE)
+
+
+def _is_rate_limit(err) -> bool:
+    text = str(err).lower()
+    return getattr(err, "status_code", None) == 429 or "tokens per minute" in text or "(tpm)" in text
+
+
 def _retry_after(err):
-    """Seconds Groq asks us to wait, or the default."""
+    """Seconds Groq asks us to wait (header, else the "try again in 2.5s" of a token-per-minute reply), or the default."""
     try:
         return float(err.response.headers["retry-after"])
     except (AttributeError, KeyError, TypeError, ValueError):
-        return RATE_LIMIT_DEFAULT_WAIT
+        pass
+    found = _TRY_AGAIN.search(str(err))
+    if found:
+        return float(found.group(1) or 0) * 60 + float(found.group(2))
+    return RATE_LIMIT_DEFAULT_WAIT
 
 
 class LLM:
     """Groq only, through the OpenAI-compatible API. Or a saved run, when the provider is replay."""
 
-    def __init__(self, *, cfg=None, env=None, secrets_path=SECRETS_PATH, client=None, run_name=None):
+    def __init__(self, *, cfg=None, env=None, secrets_path=SECRETS_PATH, client=None, run_name=None, player=None):
         cfg = cfg or load_config()
         self._env = os.environ if env is None else env
         self._secrets = _secrets(secrets_path)
@@ -84,9 +102,13 @@ class LLM:
         self.records = []
         self.federal_register = None  # items the agent's search found, saved with the run
         self.on_wait = None  # called with the seconds to wait before a rate-limit retry
+        self._tool_choice = "required"  # becomes "auto" for the rest of the run after the first refusal
+        self.on_plan_retry = None  # called with (retry number, reason) before the planner is asked again
         self._client = client
         self._player = None
-        if self.provider == "replay":
+        if self.provider == "replay" and player is not None:
+            self._player = player  # recorded calls handed in directly, such as the agent's saved exchanges
+        elif self.provider == "replay":
             if not self.run_name:
                 raise MissingSettingError("MAYA_LLM_PROVIDER is replay but MAYA_REPLAY_RUN (the saved run name) is not set.")
             self._player = ReplayPlayer(self.run_name, self.replay_dir)
@@ -152,11 +174,12 @@ class LLM:
         return reply
 
     def _choose_tool(self, model, messages, tools):
-        """Ask the planner for a tool; if it names none, ask again (up to two more times)."""
+        """Ask the planner for a tool. If it names none, or Groq rejects its call (HTTP 400), ask again up to
+        PLAN_RETRIES more times with a short correction and a growing pause."""
         asked = messages
-        for attempt in range(3):
+        for attempt in range(PLAN_RETRIES + 1):
             try:
-                response = self._create("plan", model, asked, tools=tools, tool_choice="required")
+                response = self._create("plan", model, asked, tools=tools, tool_choice=self._tool_choice if attempt == 0 else "auto")
                 calls = response.choices[0].message.tool_calls or []
                 if calls:
                     return {"name": calls[0].function.name, "arguments": json.loads(calls[0].function.arguments)}
@@ -165,10 +188,17 @@ class LLM:
                 if not any(text in str(err) for text in RETRYABLE_PLAN_ERRORS):
                     raise
                 problem = str(err)
+                if TOOL_CHOICE_REQUIRED_ERROR in problem:
+                    self._tool_choice = "auto"  # sticky: the model cannot meet "required", so stop asking for it
             except (ValueError, AttributeError):
                 problem = f"{model} gave a tool call that is not valid JSON."
             log.warning("planner attempt %d: %s", attempt + 1, problem)
-            asked = messages + [{"role": "user", "content": "Call exactly one of the tools now."}]
+            if attempt == PLAN_RETRIES:
+                break
+            if self.on_plan_retry:
+                self.on_plan_retry(attempt + 1, problem)
+            time.sleep(PLAN_BACKOFF_SECONDS * 2 ** attempt)
+            asked = messages + [{"role": "system", "content": PLAN_CORRECTION}]
         raise LLMError(problem)
 
     def _replay(self, kind, schema, system, user, digest):
@@ -204,7 +234,7 @@ class LLM:
         raise LLMError(f"{model} reply for {kind} failed its schema twice: {errors[-1]}")
 
     def _create(self, kind, model, messages, response_format=None, **extra):
-        """One Groq call; waits and retries on a rate-limit reply (HTTP 429)."""
+        """One Groq call; waits and retries on a rate-limit reply (HTTP 429 or a tokens-per-minute message)."""
         waits = 0
         while True:
             try:
@@ -214,7 +244,7 @@ class LLM:
                     **({"response_format": response_format} if response_format else {}), **extra,
                 )
             except Exception as err:  # network, auth, rate limit: never leak the key
-                if getattr(err, "status_code", None) == 429 and waits < RATE_LIMIT_RETRIES:
+                if _is_rate_limit(err) and waits < RATE_LIMIT_RETRIES:  # only a 429 or a tokens-per-minute reply waits
                     waits += 1
                     log.warning("waiting for Groq rate limit (%ss, retry %d of %d)", _retry_after(err), waits, RATE_LIMIT_RETRIES)
                     if self.on_wait:

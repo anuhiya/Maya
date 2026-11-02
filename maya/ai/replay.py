@@ -64,3 +64,17 @@ class ReplayPlayer:
                 f"Saved run {self.run_name!r} has no reply for {kind} with this prompt. "
                 "The policy text or the prompt changed since it was saved."
             ) from None
+
+
+class RecordPlayer:
+    """Plays back replies from a list of recorded calls, such as the exchanges an agent run saved in the database."""
+
+    def __init__(self, records):
+        self.run_name = "agent runs in the database"
+        self.federal_register = None
+        self._by_key = {}
+        for record in records:
+            if "kind" in record and "prompt_hash" in record and "reply" in record:
+                self._by_key.setdefault((record["kind"], record["prompt_hash"]), record)
+
+    get = ReplayPlayer.get

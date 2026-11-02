@@ -1,14 +1,29 @@
 """Export page: filtered CSV downloads (B7)."""
 import streamlit as st
 
+from datetime import date
+
 from maya import db
 from maya import export as csvs
+from maya import scenario
 from maya.site import load_config
 from maya.ui import view as v
+from maya.ui.style import empty_page
+
+
+def _scenario_text(cfg: dict, as_of) -> str:
+    try:
+        bills = scenario.list_bills(cfg)
+        bill = scenario.load_bill(bills[0], cfg)
+        return scenario.scenario_csv(scenario.compute(cfg, bill, as_of))
+    except (IndexError, ValueError, OSError, KeyError):
+        return ""
 
 
 def render(cfg: dict | None = None) -> None:
     cfg = cfg or load_config()
+    if empty_page(cfg, "Export", "Download findings and employee impact"):
+        return
     conn = db.connect(cfg["_root"] / cfg["state"]["database"])
     try:
         view = v.load_view(cfg, conn)
@@ -26,11 +41,15 @@ def render(cfg: dict | None = None) -> None:
     elif not view.shown:
         v.no_match()
         st.caption("Both files download with headers only.")
-    left, right = st.columns(2)
+    left, right, third = st.columns(3)
     left.download_button("Download findings CSV", findings_text, key="dl_findings", mime="text/csv",
                          file_name=csvs.file_name("findings", view.as_of), type="primary")
     left.caption(f"{len(findings)} findings")
     right.download_button("Download employee impact CSV", csvs.impact_csv(rows), key="dl_impact",
-                          mime="text/csv", file_name=csvs.file_name("employee_impact", view.as_of),
-                          type="primary")
+                          mime="text/csv", file_name=csvs.file_name("employee_impact", view.as_of))
     right.caption(f"{len(rows)} employee results")
+    third.download_button("Download scenario CSV", _scenario_text(cfg, view.as_of), key="dl_scenario_export",
+                          mime="text/csv", file_name=csvs.file_name("scenario", view.as_of),
+                          disabled=not scenario.list_bills(cfg))
+    third.caption("The proposed law scenario, kept apart from the findings"
+                  if scenario.list_bills(cfg) else "No proposed bill found")

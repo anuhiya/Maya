@@ -11,32 +11,32 @@ from maya.site import load_config
 ROOT = Path(__file__).resolve().parent.parent
 HEADER = ("employee_id,jurisdiction,hourly_wage,weekly_hours,employment_type,"
           "work_arrangement,office_location,secondary_jurisdiction,residence_jurisdiction")
-GOOD = "E1,Avalon,17.00,40,hourly_full_time,onsite,Avalon,,Avalon"
+GOOD = "E1,New York City,17.00,40,hourly_full_time,onsite,New York City,,New York City"
 
 FT, PT = "hourly_full_time", "hourly_part_time"
 SAL, CON = "salaried_exempt", "contractor"
 
 # employee_id: (jurisdiction, type, wage, hours, arrangement, secondary, residence), from docs/expected.md
 EDGE = {
-    "E017": ("Avalon", FT, "16.00", "38", None, None, None),
-    "E020": ("Avalon", FT, "17.24", "40", None, None, None),
-    "E004": ("Avalon", FT, "17.25", "40", None, None, None),
-    "E013": ("Avalon", PT, "17.25", "30", None, None, None),
-    "E077": ("Avalon", FT, "17.60", "40", "hybrid", "Meridian", None),
-    "E001": ("Avalon", FT, "17.06", "42", None, None, None),
-    "E015": ("Avalon", PT, "16.86", "20", None, None, None),
-    "E002": ("Avalon", FT, "16.36", "40", "onsite", None, "Calder"),
-    "E073": ("Avalon", FT, "16.80", "40", "remote", None, "Avalon"),
-    "E079": ("Avalon", FT, "16.10", "40", "hybrid", None, None),
-    "E016": ("Avalon", SAL, "16.35", "45", None, None, None),
-    "E023": ("Avalon", CON, "15.00", "20", None, None, None),
-    "E076": ("Calder", FT, "15.80", "40", "hybrid", "Avalon", None),
-    "E025": ("Calder", PT, "14.55", "22", None, None, None),
-    "E071": ("Calder", FT, "15.10", "40", "remote", None, "Calder"),
-    "E047": ("Calder", CON, "14.00", "20", None, None, None),
-    "E078": ("Meridian", PT, "15.20", "24", "hybrid", "Calder", None),
-    "E080": ("Meridian", FT, "14.80", "44", None, None, None),
-    "E068": ("Meridian", FT, "15.00", "45", None, None, "Calder"),
+    "E017": ("New York City", FT, "16.00", "38", None, None, None),
+    "E020": ("New York City", FT, "17.24", "40", None, None, None),
+    "E004": ("New York City", FT, "17.25", "40", None, None, None),
+    "E013": ("New York City", PT, "17.25", "30", None, None, None),
+    "E077": ("New York City", FT, "17.60", "40", "hybrid", "Chicago", None),
+    "E001": ("New York City", FT, "17.06", "42", None, None, None),
+    "E015": ("New York City", PT, "16.86", "20", None, None, None),
+    "E002": ("New York City", FT, "16.36", "40", "onsite", None, "Los Angeles"),
+    "E073": ("New York City", FT, "16.80", "40", "remote", None, "New York City"),
+    "E079": ("New York City", FT, "16.10", "40", "hybrid", None, None),
+    "E016": ("New York City", SAL, "16.35", "45", None, None, None),
+    "E023": ("New York City", CON, "15.00", "20", None, None, None),
+    "E076": ("Los Angeles", FT, "15.80", "40", "hybrid", "New York City", None),
+    "E025": ("Los Angeles", PT, "14.55", "22", None, None, None),
+    "E071": ("Los Angeles", FT, "15.10", "40", "remote", None, "Los Angeles"),
+    "E047": ("Los Angeles", CON, "14.00", "20", None, None, None),
+    "E078": ("Chicago", PT, "15.20", "24", "hybrid", "Los Angeles", None),
+    "E080": ("Chicago", FT, "14.80", "44", None, None, None),
+    "E068": ("Chicago", FT, "15.00", "45", None, None, "Los Angeles"),
 }
 
 
@@ -86,7 +86,7 @@ def test_clean_file_has_no_problems(tmp_path):
 
 def test_missing_required_column_is_reported(tmp_path):
     header = "employee_id,jurisdiction,hourly_wage,employment_type"
-    result = load_employees(write(tmp_path, "E1,Avalon,17.00,hourly_full_time", header=header))
+    result = load_employees(write(tmp_path, "E1,New York City,17.00,hourly_full_time", header=header))
     assert [p.column for p in result.problems] == ["weekly_hours"]
     assert result.problems[0].row is None
 
@@ -98,35 +98,35 @@ def test_duplicate_id_is_reported_and_both_rows_kept(tmp_path):
 
 
 def test_unknown_jurisdiction_is_reported_and_row_kept(tmp_path):
-    result = load_employees(write(tmp_path, "E1,Narnia,17.00,40,hourly_full_time,remote,Avalon,,Narnia"))
+    result = load_employees(write(tmp_path, "E1,Narnia,17.00,40,hourly_full_time,remote,New York City,,Narnia"))
     assert len(result.employees) == 1
     assert [(p.row, p.employee_id, p.column) for p in result.problems] == [(2, "E1", "jurisdiction")]
 
 
 def test_negative_wage_is_reported_and_row_kept(tmp_path):
-    result = load_employees(write(tmp_path, "E1,Avalon,-1.00,40,hourly_full_time,onsite,Avalon,,Avalon"))
+    result = load_employees(write(tmp_path, "E1,New York City,-1.00,40,hourly_full_time,onsite,New York City,,New York City"))
     assert len(result.employees) == 1
     assert [p.column for p in result.problems] == ["hourly_wage"]
 
 
 def test_remote_residence_differing_from_jurisdiction_is_reported(tmp_path):
-    result = load_employees(write(tmp_path, "E1,Avalon,17.00,40,hourly_full_time,remote,Meridian,,Calder"))
+    result = load_employees(write(tmp_path, "E1,New York City,17.00,40,hourly_full_time,remote,Chicago,,Los Angeles"))
     assert [p.column for p in result.problems] == ["residence_jurisdiction"]
 
 
 def test_secondary_jurisdiction_on_onsite_row_is_reported(tmp_path):
-    result = load_employees(write(tmp_path, "E1,Avalon,17.00,40,hourly_full_time,onsite,Avalon,Calder,Avalon"))
+    result = load_employees(write(tmp_path, "E1,New York City,17.00,40,hourly_full_time,onsite,New York City,Los Angeles,New York City"))
     assert [p.column for p in result.problems] == ["secondary_jurisdiction"]
 
 
 def test_zero_hours_and_unknown_type_are_reported(tmp_path):
     result = load_employees(write(tmp_path,
-                                  "E1,Avalon,17.00,0,hourly_full_time,onsite,Avalon,,Avalon",
-                                  "E2,Avalon,17.00,40,intern,onsite,Avalon,,Avalon"))
+                                  "E1,New York City,17.00,0,hourly_full_time,onsite,New York City,,New York City",
+                                  "E2,New York City,17.00,40,intern,onsite,New York City,,New York City"))
     assert [(p.row, p.column) for p in result.problems] == [(2, "weekly_hours"), (3, "employment_type")]
 
 
 def test_without_location_columns_no_location_checks(tmp_path):
     header = "employee_id,jurisdiction,hourly_wage,weekly_hours,employment_type"
-    result = load_employees(write(tmp_path, "E1,Avalon,17.00,40,hourly_full_time", header=header))
+    result = load_employees(write(tmp_path, "E1,New York City,17.00,40,hourly_full_time", header=header))
     assert result.ok

@@ -87,7 +87,7 @@ def test_known_finding_is_labelled(cfg):
     result = compare_documents(cfg["_root"] / entry["old"], cfg["_root"] / entry["new"], llm=llm, cfg=cfg)
     wage = next(f for f in result.findings if f.section == "1.1")
     decide(cfg, wage.finding_id, Status.APPROVED, "Pavan", "ok")
-    assert "Section 1.1 Avalon" in text(run(cfg))
+    assert "Section 1.1 New York City" in text(run(cfg))
 
 
 def test_status_and_decided_by_cells_do_not_wrap(cfg):
